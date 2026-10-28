@@ -29,12 +29,13 @@
             </div>
         </header>
 
-        <!-- Cấu hình cỡ chữ & kích thước cột -->
+        <!-- Cấu hình cỡ chữ & lề ô -->
         <section class="config-card">
             <div class="config-header">
                 <span class="config-title">⚙️ Tùy chỉnh kích thước</span>
             </div>
 
+            <!-- Cỡ chữ -->
             <div class="config-row">
                 <label for="input-font-size" class="config-label">
                     <span>Cỡ chữ bảng (Font size):</span>
@@ -55,8 +56,29 @@
                 <button type="button" class="btn-chip" data-size="12">12pt</button>
             </div>
 
+            <!-- Lề ô (Cell Margin) -->
+            <div class="config-row" style="margin-top: 4px; padding-top: 8px; border-top: 1px dashed #e2e8f0;">
+                <label for="input-cell-margin" class="config-label">
+                    <span>Lề ô (Cell margin):</span>
+                </label>
+                <div class="stepper-box">
+                    <button type="button" id="btn-decrease-margin" class="btn-step" title="Giảm 0.05cm">−</button>
+                    <input type="number" id="input-cell-margin" class="input-font-size" value="0.2" min="0" max="2" step="0.05">
+                    <span class="unit-text">cm</span>
+                    <button type="button" id="btn-increase-margin" class="btn-step" title="Tăng 0.05cm">+</button>
+                </div>
+            </div>
+
+            <!-- Gợi ý chọn nhanh lề ô -->
+            <div class="preset-group">
+                <button type="button" class="btn-chip-margin" data-margin="0.1">0.1cm</button>
+                <button type="button" class="btn-chip-margin" data-margin="0.15">0.15cm</button>
+                <button type="button" class="btn-chip-margin active" data-margin="0.2">0.2cm (Chuẩn)</button>
+                <button type="button" class="btn-chip-margin" data-margin="0.25">0.25cm</button>
+            </div>
+
             <!-- Tùy chọn căn đều cột số liệu -->
-            <div class="checkbox-row">
+            <div class="checkbox-row" style="margin-top: 4px; padding-top: 8px; border-top: 1px dashed #e2e8f0;">
                 <label class="custom-checkbox">
                     <input type="checkbox" id="chk-equal-numeric-cols" checked>
                     <span class="checkbox-label">Tự động căn đều kích thước các cột số liệu (không bị xuống dòng số)</span>
@@ -93,7 +115,7 @@
             <h2 class="rules-title">Quy chuẩn áp dụng:</h2>
             <ul class="rules-list">
                 <li><strong>Bảng dữ liệu:</strong> Table Grid, Times New Roman, AutoFit Window, căn giữa dọc ô, Hàng 1 in đậm căn giữa, Cột 1 căn trái, Cột 2+ căn phải.</li>
-                <li><strong>Cell margin (Lề ô):</strong> Đều 0,2 cm cho cả 4 phía (Trên, Dưới, Trái, Phải = 0,2 cm).</li>
+                <li><strong>Lề ô (Cell margin):</strong> Tùy chỉnh tự do theo đơn vị cm cho cả 4 phía.</li>
                 <li><strong>Căn đều cột số liệu:</strong> Chia đều chiều rộng các cột số liệu, bảo đảm số không tràn hay nhảy dòng.</li>
                 <li class="quoc-hieu-rule">
                     <strong>Bảng Quốc hiệu - Tiêu ngữ:</strong> Tự động nhận diện, xóa hoàn toàn viền (No border), căn giữa cả 2 cột, Cột trái (Tên trường/Viện), Cột phải (Quốc hiệu in hoa in đậm, Tiêu ngữ in đậm, Ngày tháng in nghiêng).

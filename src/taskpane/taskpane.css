@@ -168,7 +168,7 @@ body {
     gap: 6px;
 }
 
-.btn-chip {
+.btn-chip, .btn-chip-margin {
     flex: 1;
     background: #ffffff;
     border: 1px solid #cbd5e1;
@@ -182,12 +182,12 @@ body {
     text-align: center;
 }
 
-.btn-chip:hover {
+.btn-chip:hover, .btn-chip-margin:hover {
     background: #f1f5f9;
     border-color: #94a3b8;
 }
 
-.btn-chip.active {
+.btn-chip.active, .btn-chip-margin.active {
     background: #eff6ff;
     border-color: var(--primary-color);
     color: var(--primary-color);

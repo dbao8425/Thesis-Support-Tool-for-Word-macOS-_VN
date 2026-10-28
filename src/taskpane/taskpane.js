@@ -25,12 +25,35 @@ Office.onReady((info) => {
             };
         });
 
-        // Xử lý khi người dùng nhập số trực tiếp vào ô input
+        // Xử lý khi người dùng nhập số trực tiếp vào ô input cỡ chữ
         const inputFont = document.getElementById("input-font-size");
         if (inputFont) {
             inputFont.oninput = (e) => {
                 const val = parseFloat(e.target.value);
                 if (!isNaN(val)) updatePresetActive(val);
+            };
+        }
+
+        // Xử lý nút tăng / giảm lề ô (Cell margin)
+        const btnDecMargin = document.getElementById("btn-decrease-margin");
+        const btnIncMargin = document.getElementById("btn-increase-margin");
+        if (btnDecMargin) btnDecMargin.onclick = () => setCellMargin(getSelectedCellMargin() - 0.05);
+        if (btnIncMargin) btnIncMargin.onclick = () => setCellMargin(getSelectedCellMargin() + 0.05);
+
+        // Xử lý các chip gợi ý lề ô (0.1cm, 0.15cm, 0.2cm, 0.25cm)
+        document.querySelectorAll(".btn-chip-margin").forEach(chip => {
+            chip.onclick = () => {
+                const margin = parseFloat(chip.getAttribute("data-margin"));
+                setCellMargin(margin);
+            };
+        });
+
+        // Xử lý khi người dùng nhập số trực tiếp vào ô input lề ô
+        const inputMargin = document.getElementById("input-cell-margin");
+        if (inputMargin) {
+            inputMargin.oninput = (e) => {
+                const val = parseFloat(e.target.value);
+                if (!isNaN(val)) updateMarginPresetActive(val);
             };
         }
     }
@@ -47,7 +70,7 @@ function getSelectedFontSize() {
 }
 
 /**
- * Cập nhật trạng thái active cho các nút chip gợi ý
+ * Cập nhật trạng thái active cho các nút chip gợi ý cỡ chữ
  * @param {number} size
  */
 function updatePresetActive(size) {
@@ -70,6 +93,42 @@ function setFontSize(newSize) {
     const input = document.getElementById("input-font-size");
     if (input) input.value = newSize;
     updatePresetActive(newSize);
+}
+
+/**
+ * Lấy giá trị lề ô (Cell margin) theo đơn vị cm (mặc định 0.2 cm)
+ * @returns {number}
+ */
+function getSelectedCellMargin() {
+    const input = document.getElementById("input-cell-margin");
+    const val = parseFloat(input ? input.value : 0.2);
+    return (isNaN(val) || val < 0) ? 0.2 : val;
+}
+
+/**
+ * Cập nhật trạng thái active cho các nút chip gợi ý lề ô
+ * @param {number} margin
+ */
+function updateMarginPresetActive(margin) {
+    document.querySelectorAll(".btn-chip-margin").forEach(chip => {
+        const chipMargin = parseFloat(chip.getAttribute("data-margin"));
+        if (Math.abs(chipMargin - margin) < 0.01) {
+            chip.classList.add("active");
+        } else {
+            chip.classList.remove("active");
+        }
+    });
+}
+
+/**
+ * Đặt giá trị lề ô mới và cập nhật giao diện
+ * @param {number} newMargin
+ */
+function setCellMargin(newMargin) {
+    newMargin = Math.max(0, Math.min(2, Math.round(newMargin * 100) / 100));
+    const input = document.getElementById("input-cell-margin");
+    if (input) input.value = newMargin;
+    updateMarginPresetActive(newMargin);
 }
 
 /**
@@ -165,13 +224,15 @@ async function formatSingleTable(table, context) {
         }
     }
 
-    // Quy chuẩn Cell Margin: đều 0,2 cm (5.67 pt) cho cả 4 phía (Top, Bottom, Left, Right)
-    const margin02cm = 5.67;
+    // Quy chuẩn Cell Margin: lấy theo ô tùy chỉnh của người dùng (mặc định 0.2cm)
+    const marginCm = getSelectedCellMargin();
+    // 1 cm = 72 / 2.54 pt ≈ 28.3465 pt
+    const marginPt = marginCm * (72 / 2.54);
     try {
-        table.setCellPadding("Top", margin02cm);
-        table.setCellPadding("Bottom", margin02cm);
-        table.setCellPadding("Left", margin02cm);
-        table.setCellPadding("Right", margin02cm);
+        table.setCellPadding("Top", marginPt);
+        table.setCellPadding("Bottom", marginPt);
+        table.setCellPadding("Left", marginPt);
+        table.setCellPadding("Right", marginPt);
     } catch (e) {}
 
     // 2. Load các hàng (rows) của bảng
@@ -189,17 +250,17 @@ async function formatSingleTable(table, context) {
     }
     await context.sync();
 
-    // 4. Căn lề dọc ô (Center), lề ô 0.2cm và load đoạn văn bản qua cell.body
+    // 4. Căn lề dọc ô (Center), đặt lề ô và load đoạn văn bản qua cell.body
     for (let r = 0; r < rows.items.length; r++) {
         const cells = rows.items[r].cells.items;
         for (let c = 0; c < cells.length; c++) {
             const cell = cells[c];
             cell.verticalAlignment = "Center";
             try {
-                cell.setCellPadding("Top", margin02cm);
-                cell.setCellPadding("Bottom", margin02cm);
-                cell.setCellPadding("Left", margin02cm);
-                cell.setCellPadding("Right", margin02cm);
+                cell.setCellPadding("Top", marginPt);
+                cell.setCellPadding("Bottom", marginPt);
+                cell.setCellPadding("Left", marginPt);
+                cell.setCellPadding("Right", marginPt);
             } catch (err) {}
             cell.body.paragraphs.load("items, text");
         }
@@ -483,10 +544,11 @@ async function formatSelectedTable() {
                 showStatus("Đã định dạng phần Quốc hiệu - Tiêu ngữ thành công (xóa viền, căn giữa 2 bên, in đậm/nghiêng đúng chuẩn)!", "success");
             } else {
                 const fontSize = getSelectedFontSize();
-                showStatus(`Đang định dạng bảng dữ liệu (Font ${fontSize}pt, căn đều cột số)...`, "info");
+                const marginCm = getSelectedCellMargin();
+                showStatus(`Đang định dạng bảng dữ liệu (Font ${fontSize}pt, Lề ${marginCm}cm, căn đều cột số)...`, "info");
                 await formatSingleTable(targetTable, context);
                 await context.sync();
-                showStatus(`Đã định dạng bảng dữ liệu thành công (Font ${fontSize}pt)!`, "success");
+                showStatus(`Đã định dạng bảng dữ liệu thành công (Font ${fontSize}pt, Lề ${marginCm}cm)!`, "success");
             }
         });
     } catch (error) {
@@ -503,7 +565,8 @@ async function formatSelectedTable() {
 async function formatAllTables() {
     setButtonsDisabled(true);
     const fontSize = getSelectedFontSize();
-    showStatus(`Đang tìm và phân loại tất cả các bảng (Font ${fontSize}pt)...`, "info");
+    const marginCm = getSelectedCellMargin();
+    showStatus(`Đang tìm và phân loại tất cả các bảng (Font ${fontSize}pt, Lề ${marginCm}cm)...`, "info");
 
     try {
         await Word.run(async (context) => {
@@ -533,14 +596,14 @@ async function formatAllTables() {
                     await formatQuocHieuTable(tbl, context);
                     quocHieuCount++;
                 } else {
-                    showStatus(`Đang định dạng bảng dữ liệu (${i + 1}/${count}) với Font ${fontSize}pt...`, "info");
+                    showStatus(`Đang định dạng bảng dữ liệu (${i + 1}/${count}) với Font ${fontSize}pt, Lề ${marginCm}cm...`, "info");
                     await formatSingleTable(tbl, context);
                     dataTablesCount++;
                 }
             }
 
             await context.sync();
-            let msg = `Hoàn thành! Đã định dạng ${dataTablesCount} bảng dữ liệu (Font ${fontSize}pt)`;
+            let msg = `Hoàn thành! Đã định dạng ${dataTablesCount} bảng dữ liệu (Font ${fontSize}pt, Lề ${marginCm}cm)`;
             if (quocHieuCount > 0) {
                 msg += ` và ${quocHieuCount} bảng Quốc hiệu - Tiêu ngữ`;
             }
