@@ -1,0 +1,28 @@
+{
+  "name": "word-thesis-table-formatter",
+  "version": "1.0.0",
+  "description": "Word Task Pane Web Add-in to format tables according to thesis guidelines",
+  "author": "Thesis Tools",
+  "license": "MIT",
+  "scripts": {
+    "build": "webpack --mode production",
+    "build:dev": "webpack --mode development",
+    "dev-server": "webpack serve --mode development",
+    "start": "office-addin-debugging start manifest.xml",
+    "stop": "office-addin-debugging stop manifest.xml",
+    "validate": "office-addin-manifest validate manifest.xml"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/office-js": "^1.0.380",
+    "copy-webpack-plugin": "^12.0.2",
+    "html-webpack-plugin": "^5.6.0",
+    "office-addin-cli": "^3.0.1",
+    "office-addin-debugging": "^7.0.1",
+    "office-addin-dev-certs": "^3.0.1",
+    "office-addin-manifest": "^3.0.1",
+    "webpack": "^5.90.3",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^5.0.2"
+  }
+}
