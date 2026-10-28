@@ -165,10 +165,13 @@ async function formatSingleTable(table, context) {
         }
     }
 
-    // Giảm lề trong ô (padding) từ mặc định 5.4pt xuống 2.0pt để giải phóng tối đa không gian cho số liệu
+    // Quy chuẩn Cell Margin: đều 0,2 cm (5.67 pt) cho cả 4 phía (Top, Bottom, Left, Right)
+    const margin02cm = 5.67;
     try {
-        table.setCellPadding("Left", 2.0);
-        table.setCellPadding("Right", 2.0);
+        table.setCellPadding("Top", margin02cm);
+        table.setCellPadding("Bottom", margin02cm);
+        table.setCellPadding("Left", margin02cm);
+        table.setCellPadding("Right", margin02cm);
     } catch (e) {}
 
     // 2. Load các hàng (rows) của bảng
@@ -186,12 +189,18 @@ async function formatSingleTable(table, context) {
     }
     await context.sync();
 
-    // 4. Căn lề dọc ô (Center) và load đoạn văn bản qua cell.body
+    // 4. Căn lề dọc ô (Center), lề ô 0.2cm và load đoạn văn bản qua cell.body
     for (let r = 0; r < rows.items.length; r++) {
         const cells = rows.items[r].cells.items;
         for (let c = 0; c < cells.length; c++) {
             const cell = cells[c];
             cell.verticalAlignment = "Center";
+            try {
+                cell.setCellPadding("Top", margin02cm);
+                cell.setCellPadding("Bottom", margin02cm);
+                cell.setCellPadding("Left", margin02cm);
+                cell.setCellPadding("Right", margin02cm);
+            } catch (err) {}
             cell.body.paragraphs.load("items, text");
         }
     }
