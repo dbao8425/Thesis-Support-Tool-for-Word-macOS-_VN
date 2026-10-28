@@ -10,8 +10,67 @@ Office.onReady((info) => {
         document.getElementById("btn-format-selected").onclick = formatSelectedTable;
         document.getElementById("btn-format-all").onclick = formatAllTables;
         document.getElementById("btn-format-quochieu").onclick = formatQuocHieuButton;
+
+        // Xử lý nút tăng / giảm cỡ chữ
+        const btnDec = document.getElementById("btn-decrease-font");
+        const btnInc = document.getElementById("btn-increase-font");
+        if (btnDec) btnDec.onclick = () => setFontSize(getSelectedFontSize() - 0.5);
+        if (btnInc) btnInc.onclick = () => setFontSize(getSelectedFontSize() + 0.5);
+
+        // Xử lý các chip gợi ý cỡ chữ (9pt, 10pt, 11pt, 12pt)
+        document.querySelectorAll(".btn-chip").forEach(chip => {
+            chip.onclick = () => {
+                const size = parseFloat(chip.getAttribute("data-size"));
+                setFontSize(size);
+            };
+        });
+
+        // Xử lý khi người dùng nhập số trực tiếp vào ô input
+        const inputFont = document.getElementById("input-font-size");
+        if (inputFont) {
+            inputFont.oninput = (e) => {
+                const val = parseFloat(e.target.value);
+                if (!isNaN(val)) updatePresetActive(val);
+            };
+        }
     }
 });
+
+/**
+ * Lấy cỡ chữ người dùng đã chọn (mặc định 11pt)
+ * @returns {number}
+ */
+function getSelectedFontSize() {
+    const input = document.getElementById("input-font-size");
+    const val = parseFloat(input ? input.value : 11);
+    return (isNaN(val) || val <= 0) ? 11 : val;
+}
+
+/**
+ * Cập nhật trạng thái active cho các nút chip gợi ý
+ * @param {number} size
+ */
+function updatePresetActive(size) {
+    document.querySelectorAll(".btn-chip").forEach(chip => {
+        const chipSize = parseFloat(chip.getAttribute("data-size"));
+        if (chipSize === size) {
+            chip.classList.add("active");
+        } else {
+            chip.classList.remove("active");
+        }
+    });
+}
+
+/**
+ * Đặt cỡ chữ mới cho ô input và cập nhật giao diện
+ * @param {number} newSize
+ */
+function setFontSize(newSize) {
+    newSize = Math.max(6, Math.min(16, Math.round(newSize * 2) / 2));
+    const input = document.getElementById("input-font-size");
+    if (input) input.value = newSize;
+    updatePresetActive(newSize);
+}
 
 /**
  * Hiển thị thông báo trạng thái trên Task Pane
@@ -80,9 +139,9 @@ function isQuocHieuTable(values) {
 
 /**
  * 1. ĐỊNH DẠNG BẢNG DỮ LIỆU KHÓA LUẬN (Data Table)
+ * - Cỡ chữ linh hoạt theo ô nhập (mặc định 11pt, có thể giảm xuống 10pt, 9pt...)
+ * - Căn đều kích thước các cột số liệu (Cột 2 trở đi) để số không bị nhảy dòng
  * - Table Style: Table Grid
- * - Font: Times New Roman 11pt, #000000
- * - Giãn đoạn: 0pt Before/After, Single line
  * - Căn lề dọc ô: Center
  * - Hàng 1: In đậm, căn giữa
  * - Từ hàng 2: Cột 1 căn trái, Cột 2+ căn phải
@@ -91,6 +150,10 @@ function isQuocHieuTable(values) {
  * @param {Word.RequestContext} context
  */
 async function formatSingleTable(table, context) {
+    const fontSize = getSelectedFontSize();
+    const chkEqual = document.getElementById("chk-equal-numeric-cols");
+    const shouldEqualCols = chkEqual ? chkEqual.checked : true;
+
     // 1. Áp dụng Table Style: "Table Grid"
     try {
         table.styleBuiltIn = "TableGrid";
@@ -123,7 +186,7 @@ async function formatSingleTable(table, context) {
         for (let c = 0; c < cells.length; c++) {
             const cell = cells[c];
             cell.verticalAlignment = "Center";
-            cell.body.paragraphs.load("items");
+            cell.body.paragraphs.load("items, text");
         }
     }
     await context.sync();
@@ -141,15 +204,15 @@ async function formatSingleTable(table, context) {
             for (let p = 0; p < paragraphs.length; p++) {
                 const para = paragraphs[p];
 
-                // Font chữ toàn bảng: Times New Roman, 11pt, #000000
+                // Font chữ toàn bảng theo kích thước người dùng chọn
                 para.font.name = "Times New Roman";
-                para.font.size = 11;
+                para.font.size = fontSize;
                 para.font.color = "#000000";
 
-                // Khoảng cách đoạn: Before = 0, After = 0, Line spacing = Single (11pt)
+                // Khoảng cách đoạn: Before = 0, After = 0, Line spacing = dòng đơn theo cỡ chữ
                 para.spaceBefore = 0;
                 para.spaceAfter = 0;
-                para.lineSpacing = 11;
+                para.lineSpacing = fontSize;
 
                 // Quy tắc cho từng hàng/cột:
                 if (isHeaderRow) {
@@ -168,7 +231,44 @@ async function formatSingleTable(table, context) {
         }
     }
 
-    // 6. Tự động co giãn bảng theo độ rộng trang (AutoFit Window)
+    // 6. Căn đều kích thước các cột số liệu (Cột 2 trở đi)
+    if (shouldEqualCols) {
+        try {
+            const tableColumns = table.getRange().tableColumns;
+            tableColumns.load("items/columnIndex, items/width");
+            await context.sync();
+
+            const colCount = tableColumns.items.length;
+            if (colCount > 2) {
+                // Tính tổng chiều rộng hiện tại của toàn bộ bảng
+                let totalWidth = 0;
+                for (let i = 0; i < colCount; i++) {
+                    totalWidth += tableColumns.items[i].width;
+                }
+
+                // Cột nhãn (Cột 0): Cân đối phân bổ khoảng 28% - 35% độ rộng bảng
+                let labelWidth = tableColumns.items[0].width;
+                if (labelWidth < totalWidth * 0.25) labelWidth = totalWidth * 0.28;
+                if (labelWidth > totalWidth * 0.42) labelWidth = totalWidth * 0.35;
+
+                // Chiều rộng đều nhau cho từng cột số liệu còn lại
+                const numColWidth = (totalWidth - labelWidth) / (colCount - 1);
+
+                tableColumns.items[0].preferredWidth = labelWidth;
+                tableColumns.items[0].preferredWidthType = "Points";
+
+                for (let i = 1; i < colCount; i++) {
+                    tableColumns.items[i].preferredWidth = numColWidth;
+                    tableColumns.items[i].preferredWidthType = "Points";
+                }
+                await context.sync();
+            }
+        } catch (e) {
+            console.warn("Không thể căn đều độ rộng cột số liệu:", e);
+        }
+    }
+
+    // 7. AutoFit Window để căn khớp hoàn hảo với lề trang
     try {
         if (typeof table.autoFitWindow === "function") {
             table.autoFitWindow();
@@ -182,7 +282,7 @@ async function formatSingleTable(table, context) {
 
 /**
  * 2. ĐỊNH DẠNG BẢNG QUỐC HIỆU - TIÊU NGỮ (Header Table)
- * - Xóa sạch mọi đường viền bảng (No border)
+ * - Xóa sạch mọi đường viền bảng (PlainTable1 + No border)
  * - Căn lề dọc ô: Top (để 2 bên cân đối từ dòng đầu tiên)
  * - Cả 2 cột: Căn giữa ngang (Centered)
  * - Cột 1 (Đơn vị/Trường): Times New Roman 12pt, Trường không đậm, Viện/Khoa in đậm
@@ -204,7 +304,7 @@ async function formatQuocHieuTable(table, context) {
         } catch {}
     }
 
-    // 2. Xóa các đường viền của bảng (Dùng các vị trí an toàn cho bảng 1 hàng)
+    // 2. Xóa các đường viền của bảng (Dùng các vị trí an toàn)
     try {
         table.getBorder("All").type = "None";
     } catch {}
@@ -245,7 +345,6 @@ async function formatQuocHieuTable(table, context) {
             const cell = cells[c];
             cell.verticalAlignment = "Top";
 
-            // Xóa triệt để viền từng ô để không còn đường kẻ nào sót lại
             const cellBorders = ["Top", "Bottom", "Left", "Right"];
             for (const cb of cellBorders) {
                 try {
@@ -258,7 +357,7 @@ async function formatQuocHieuTable(table, context) {
     }
     await context.sync();
 
-    // 4. Áp dụng định dạng chi tiết từng ô
+    // 5. Áp dụng định dạng chi tiết từng ô
     for (let r = 0; r < rows.items.length; r++) {
         const cells = rows.items[r].cells.items;
 
@@ -308,8 +407,6 @@ async function formatQuocHieuTable(table, context) {
                     para.font.size = 12;
                     para.font.italic = false;
 
-                    // Theo mẫu: 2 dòng đầu (TRƯỜNG ĐẠI HỌC TÀI CHÍNH - MARKETING) là chữ thường/không đậm
-                    // Các dòng đơn vị trực tiếp (VIỆN CÔNG NGHỆ TÀI CHÍNH NGÂN HÀNG) là in đậm
                     if (paragraphs.length <= 2) {
                         para.font.bold = (p === paragraphs.length - 1);
                     } else {
@@ -324,7 +421,7 @@ async function formatQuocHieuTable(table, context) {
         }
     }
 
-    // 5. AutoFit Window
+    // 6. AutoFit Window
     try {
         if (typeof table.autoFitWindow === "function") {
             table.autoFitWindow();
@@ -373,10 +470,11 @@ async function formatSelectedTable() {
                 await context.sync();
                 showStatus("Đã định dạng phần Quốc hiệu - Tiêu ngữ thành công (xóa viền, căn giữa 2 bên, in đậm/nghiêng đúng chuẩn)!", "success");
             } else {
-                showStatus("Đang định dạng bảng dữ liệu theo chuẩn khóa luận...", "info");
+                const fontSize = getSelectedFontSize();
+                showStatus(`Đang định dạng bảng dữ liệu (Font ${fontSize}pt, căn đều cột số)...`, "info");
                 await formatSingleTable(targetTable, context);
                 await context.sync();
-                showStatus("Đã định dạng bảng dữ liệu được chọn thành công!", "success");
+                showStatus(`Đã định dạng bảng dữ liệu thành công (Font ${fontSize}pt)!`, "success");
             }
         });
     } catch (error) {
@@ -389,12 +487,11 @@ async function formatSelectedTable() {
 
 /**
  * Xử lý: Định dạng tất cả các bảng trong file
- * - Tự động nhận diện bảng Quốc hiệu - Tiêu ngữ để định dạng không viền
- * - Định dạng các bảng dữ liệu còn lại theo chuẩn bảng số liệu khóa luận
  */
 async function formatAllTables() {
     setButtonsDisabled(true);
-    showStatus("Đang tìm và phân loại tất cả các bảng trong tài liệu...", "info");
+    const fontSize = getSelectedFontSize();
+    showStatus(`Đang tìm và phân loại tất cả các bảng (Font ${fontSize}pt)...`, "info");
 
     try {
         await Word.run(async (context) => {
@@ -424,16 +521,16 @@ async function formatAllTables() {
                     await formatQuocHieuTable(tbl, context);
                     quocHieuCount++;
                 } else {
-                    showStatus(`Đang định dạng bảng dữ liệu (${i + 1}/${count})...`, "info");
+                    showStatus(`Đang định dạng bảng dữ liệu (${i + 1}/${count}) với Font ${fontSize}pt...`, "info");
                     await formatSingleTable(tbl, context);
                     dataTablesCount++;
                 }
             }
 
             await context.sync();
-            let msg = `Hoàn thành! Đã định dạng ${dataTablesCount} bảng dữ liệu`;
+            let msg = `Hoàn thành! Đã định dạng ${dataTablesCount} bảng dữ liệu (Font ${fontSize}pt)`;
             if (quocHieuCount > 0) {
-                msg += ` và ${quocHieuCount} bảng Quốc hiệu - Tiêu ngữ (đã xóa viền và căn chuẩn)`;
+                msg += ` và ${quocHieuCount} bảng Quốc hiệu - Tiêu ngữ`;
             }
             msg += ".";
             showStatus(msg, "success");
@@ -455,7 +552,6 @@ async function formatQuocHieuButton() {
 
     try {
         await Word.run(async (context) => {
-            // Kiểm tra xem người dùng có đang đặt trỏ ở bảng nào không
             const selection = context.document.getSelection();
             const parentTable = selection.parentTableOrNullObject;
             const parentCell = selection.parentTableCellOrNullObject;
@@ -470,7 +566,6 @@ async function formatQuocHieuButton() {
                 targetTable = parentCell.parentTable;
             }
 
-            // Nếu người dùng đã chọn một bảng cụ thể
             if (targetTable) {
                 await formatQuocHieuTable(targetTable, context);
                 await context.sync();
@@ -478,7 +573,6 @@ async function formatQuocHieuButton() {
                 return;
             }
 
-            // Nếu không chọn bảng, tự động tìm bảng Quốc hiệu trong tài liệu
             const tables = context.document.body.tables;
             tables.load("items");
             await context.sync();
