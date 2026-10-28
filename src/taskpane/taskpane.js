@@ -165,6 +165,12 @@ async function formatSingleTable(table, context) {
         }
     }
 
+    // Giảm lề trong ô (padding) từ mặc định 5.4pt xuống 2.0pt để giải phóng tối đa không gian cho số liệu
+    try {
+        table.setCellPadding("Left", 2.0);
+        table.setCellPadding("Right", 2.0);
+    } catch (e) {}
+
     // 2. Load các hàng (rows) của bảng
     const rows = table.rows;
     rows.load("items");
@@ -231,52 +237,49 @@ async function formatSingleTable(table, context) {
         }
     }
 
-    // 6. Căn đều kích thước các cột số liệu (Cột 2 trở đi)
-    if (shouldEqualCols) {
+    // 6. Căn đều kích thước các cột số liệu (Cột 2 trở đi) bằng Word.TableCell.columnWidth
+    if (shouldEqualCols && rows.items.length > 0) {
         try {
-            const tableColumns = table.getRange().tableColumns;
-            tableColumns.load("items/columnIndex, items/width");
-            await context.sync();
+            const colCount = rows.items[0].cells.items.length;
 
-            const colCount = tableColumns.items.length;
-            if (colCount > 2) {
-                // Tính tổng chiều rộng hiện tại của toàn bộ bảng
-                let totalWidth = 0;
-                for (let i = 0; i < colCount; i++) {
-                    totalWidth += tableColumns.items[i].width;
-                }
+            if (colCount >= 2) {
+                // Chiều rộng trang chuẩn A4 (lề 2.5cm) là ~468pt
+                const totalWidth = 468;
 
-                // Cột nhãn (Cột 0): Cân đối phân bổ khoảng 28% - 35% độ rộng bảng
-                let labelWidth = tableColumns.items[0].width;
-                if (labelWidth < totalWidth * 0.25) labelWidth = totalWidth * 0.28;
-                if (labelWidth > totalWidth * 0.42) labelWidth = totalWidth * 0.35;
+                // Tỷ lệ phân bổ cho Cột 1 (nhãn/chỉ tiêu):
+                // Bảng càng nhiều cột số thì cột nhãn càng co lại hợp lý
+                let labelRatio = 0.36;
+                if (colCount >= 7) labelRatio = 0.25;
+                else if (colCount >= 6) labelRatio = 0.28;
+                else if (colCount >= 5) labelRatio = 0.30;
+                else if (colCount >= 4) labelRatio = 0.33;
 
-                // Chiều rộng đều nhau cho từng cột số liệu còn lại
-                const numColWidth = (totalWidth - labelWidth) / (colCount - 1);
+                const labelWidth = Math.round(totalWidth * labelRatio);
+                const numColWidth = Math.floor((totalWidth - labelWidth) / (colCount - 1));
 
-                tableColumns.items[0].preferredWidth = labelWidth;
-                tableColumns.items[0].preferredWidthType = "Points";
-
-                for (let i = 1; i < colCount; i++) {
-                    tableColumns.items[i].preferredWidth = numColWidth;
-                    tableColumns.items[i].preferredWidthType = "Points";
+                // Gán columnWidth trực tiếp cho từng ô trong bảng (WordApi 1.3+ tương thích 100% Word for Mac)
+                for (let r = 0; r < rows.items.length; r++) {
+                    const rowCells = rows.items[r].cells.items;
+                    for (let c = 0; c < rowCells.length; c++) {
+                        rowCells[c].columnWidth = (c === 0) ? labelWidth : numColWidth;
+                    }
                 }
                 await context.sync();
             }
         } catch (e) {
-            console.warn("Không thể căn đều độ rộng cột số liệu:", e);
+            console.warn("Lỗi khi điều chỉnh độ rộng cột:", e);
         }
-    }
-
-    // 7. AutoFit Window để căn khớp hoàn hảo với lề trang
-    try {
-        if (typeof table.autoFitWindow === "function") {
-            table.autoFitWindow();
-        } else if (typeof table.autoFitBehavior === "function") {
-            table.autoFitBehavior("Window");
+    } else {
+        // Chỉ chạy AutoFit Window tự do nếu người dùng tắt tính năng căn đều cột
+        try {
+            if (typeof table.autoFitWindow === "function") {
+                table.autoFitWindow();
+            } else if (typeof table.autoFitBehavior === "function") {
+                table.autoFitBehavior("Window");
+            }
+        } catch (e) {
+            console.warn("AutoFit Window không được hỗ trợ hoặc gặp lỗi:", e);
         }
-    } catch (e) {
-        console.warn("AutoFit Window không được hỗ trợ hoặc gặp lỗi:", e);
     }
 }
 
