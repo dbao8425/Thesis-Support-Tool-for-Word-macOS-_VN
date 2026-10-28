@@ -56,25 +56,57 @@
                 <button type="button" class="btn-chip" data-size="12">12pt</button>
             </div>
 
-            <!-- Lề ô (Cell Margin) -->
-            <div class="config-row" style="margin-top: 4px; padding-top: 8px; border-top: 1px dashed #e2e8f0;">
-                <label for="input-cell-margin" class="config-label">
-                    <span>Lề ô (Cell margin):</span>
-                </label>
-                <div class="stepper-box">
-                    <button type="button" id="btn-decrease-margin" class="btn-step" title="Giảm 0.05cm">−</button>
-                    <input type="number" id="input-cell-margin" class="input-font-size" value="0.2" min="0" max="2" step="0.05">
-                    <span class="unit-text">cm</span>
-                    <button type="button" id="btn-increase-margin" class="btn-step" title="Tăng 0.05cm">+</button>
+            <!-- Lề ô (Cell Margin) 4 cạnh nhập riêng -->
+            <div style="margin-top: 6px; padding-top: 8px; border-top: 1px dashed #e2e8f0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <span class="config-label" style="font-weight: 600;">Lề ô (Cell margin) - cm:</span>
+                </div>
+                <div class="margin-grid">
+                    <div class="margin-item">
+                        <label for="input-margin-top" class="margin-label">Trên:</label>
+                        <div class="stepper-box compact">
+                            <button type="button" id="btn-dec-top" class="btn-step" title="Giảm 0.05cm">−</button>
+                            <input type="number" id="input-margin-top" class="input-margin" value="0.2" min="0" max="2" step="0.05">
+                            <span class="unit-text">cm</span>
+                            <button type="button" id="btn-inc-top" class="btn-step" title="Tăng 0.05cm">+</button>
+                        </div>
+                    </div>
+                    <div class="margin-item">
+                        <label for="input-margin-bottom" class="margin-label">Dưới:</label>
+                        <div class="stepper-box compact">
+                            <button type="button" id="btn-dec-bottom" class="btn-step" title="Giảm 0.05cm">−</button>
+                            <input type="number" id="input-margin-bottom" class="input-margin" value="0.2" min="0" max="2" step="0.05">
+                            <span class="unit-text">cm</span>
+                            <button type="button" id="btn-inc-bottom" class="btn-step" title="Tăng 0.05cm">+</button>
+                        </div>
+                    </div>
+                    <div class="margin-item">
+                        <label for="input-margin-left" class="margin-label">Trái:</label>
+                        <div class="stepper-box compact">
+                            <button type="button" id="btn-dec-left" class="btn-step" title="Giảm 0.05cm">−</button>
+                            <input type="number" id="input-margin-left" class="input-margin" value="0.2" min="0" max="2" step="0.05">
+                            <span class="unit-text">cm</span>
+                            <button type="button" id="btn-inc-left" class="btn-step" title="Tăng 0.05cm">+</button>
+                        </div>
+                    </div>
+                    <div class="margin-item">
+                        <label for="input-margin-right" class="margin-label">Phải:</label>
+                        <div class="stepper-box compact">
+                            <button type="button" id="btn-dec-right" class="btn-step" title="Giảm 0.05cm">−</button>
+                            <input type="number" id="input-margin-right" class="input-margin" value="0.2" min="0" max="2" step="0.05">
+                            <span class="unit-text">cm</span>
+                            <button type="button" id="btn-inc-right" class="btn-step" title="Tăng 0.05cm">+</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <!-- Gợi ý chọn nhanh lề ô -->
-            <div class="preset-group">
-                <button type="button" class="btn-chip-margin" data-margin="0.1">0.1cm</button>
-                <button type="button" class="btn-chip-margin" data-margin="0.15">0.15cm</button>
-                <button type="button" class="btn-chip-margin active" data-margin="0.2">0.2cm (Chuẩn)</button>
-                <button type="button" class="btn-chip-margin" data-margin="0.25">0.25cm</button>
+            <div class="preset-group" style="margin-top: 6px;">
+                <button type="button" class="btn-chip-margin" data-top="0.1" data-bottom="0.1" data-left="0.1" data-right="0.1">Đều 0.1</button>
+                <button type="button" class="btn-chip-margin" data-top="0.15" data-bottom="0.15" data-left="0.15" data-right="0.15">Đều 0.15</button>
+                <button type="button" class="btn-chip-margin active" data-top="0.2" data-bottom="0.2" data-left="0.2" data-right="0.2">Đều 0.2</button>
+                <button type="button" class="btn-chip-margin" data-top="0.15" data-bottom="0.15" data-left="0.1" data-right="0.1">T/D 0.15 T/P 0.1</button>
             </div>
 
             <!-- Tùy chọn căn đều cột số liệu -->
@@ -115,7 +147,7 @@
             <h2 class="rules-title">Quy chuẩn áp dụng:</h2>
             <ul class="rules-list">
                 <li><strong>Bảng dữ liệu:</strong> Table Grid, Times New Roman, AutoFit Window, căn giữa dọc ô, Hàng 1 in đậm căn giữa, Cột 1 căn trái, Cột 2+ căn phải.</li>
-                <li><strong>Lề ô (Cell margin):</strong> Tùy chỉnh tự do theo đơn vị cm cho cả 4 phía.</li>
+                <li><strong>Lề ô (Cell margin):</strong> Tùy chỉnh tự do theo đơn vị cm riêng biệt từng cạnh (Trên, Dưới, Trái, Phải).</li>
                 <li><strong>Căn đều cột số liệu:</strong> Chia đều chiều rộng các cột số liệu, bảo đảm số không tràn hay nhảy dòng.</li>
                 <li class="quoc-hieu-rule">
                     <strong>Bảng Quốc hiệu - Tiêu ngữ:</strong> Tự động nhận diện, xóa hoàn toàn viền (No border), căn giữa cả 2 cột, Cột trái (Tên trường/Viện), Cột phải (Quốc hiệu in hoa in đậm, Tiêu ngữ in đậm, Ngày tháng in nghiêng).

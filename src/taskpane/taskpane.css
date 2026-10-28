@@ -163,6 +163,60 @@ body {
     padding-right: 6px;
 }
 
+/* 4 cạnh lề ô (Cell Margin Grid) */
+.margin-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.margin-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 3px 5px;
+}
+
+.margin-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #475569;
+    min-width: 28px;
+}
+
+.stepper-box.compact {
+    height: 24px;
+}
+
+.stepper-box.compact .btn-step {
+    width: 20px;
+    height: 24px;
+    font-size: 13px;
+}
+
+.input-margin {
+    width: 32px;
+    height: 24px;
+    border: none;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--primary-color);
+    outline: none;
+    background: transparent;
+    -moz-appearance: textfield;
+}
+
+.input-margin::-webkit-outer-spin-button,
+.input-margin::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
 .preset-group {
     display: flex;
     gap: 6px;
