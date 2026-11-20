@@ -10,6 +10,8 @@ Office.onReady((info) => {
         document.getElementById("btn-format-selected").onclick = formatSelectedTable;
         document.getElementById("btn-format-all").onclick = formatAllTables;
         document.getElementById("btn-format-quochieu").onclick = formatQuocHieuButton;
+        const btnFormatPara = document.getElementById("btn-format-paragraphs");
+        if (btnFormatPara) btnFormatPara.onclick = formatSelectedParagraphs;
 
         // Xử lý nút tăng / giảm cỡ chữ
         const btnDec = document.getElementById("btn-decrease-font");
@@ -91,6 +93,9 @@ Office.onReady((info) => {
                 if (w) w.value = "";
             };
         }
+
+        // Xử lý các tùy chọn Format Paragraph
+        initParagraphControls();
     }
 });
 
@@ -243,6 +248,151 @@ function getOptionalDimensions() {
 }
 
 /**
+ * Khởi tạo các sự kiện cho thẻ Tùy chỉnh Đoạn văn (Paragraph)
+ */
+function initParagraphControls() {
+    const bindStepper = (decId, incId, inputId, step, min, max, decimals = 2) => {
+        const btnDec = document.getElementById(decId);
+        const btnInc = document.getElementById(incId);
+        const input = document.getElementById(inputId);
+        const factor = Math.pow(10, decimals);
+        const adjust = (delta) => {
+            if (!input) return;
+            const cur = parseFloat(input.value);
+            const base = isNaN(cur) ? 0 : cur;
+            const next = Math.max(min, Math.min(max, Math.round((base + delta) * factor) / factor));
+            input.value = next;
+            syncParagraphChips();
+        };
+        if (btnDec) btnDec.onclick = () => adjust(-step);
+        if (btnInc) btnInc.onclick = () => adjust(step);
+        if (input) input.oninput = syncParagraphChips;
+    };
+
+    bindStepper("btn-dec-line-spacing", "btn-inc-line-spacing", "input-para-line-spacing", 0.05, 0.5, 5, 2);
+    bindStepper("btn-dec-para-font", "btn-inc-para-font", "input-para-font-size", 0.5, 6, 72, 1);
+    bindStepper("btn-dec-space-before", "btn-inc-space-before", "input-para-space-before", 1, 0, 100, 1);
+    bindStepper("btn-dec-space-after", "btn-inc-space-after", "input-para-space-after", 1, 0, 100, 1);
+    bindStepper("btn-dec-indent-first", "btn-inc-indent-first", "input-para-indent-first", 0.1, -5, 10, 2);
+    bindStepper("btn-dec-indent-left", "btn-inc-indent-left", "input-para-indent-left", 0.1, 0, 10, 2);
+    bindStepper("btn-dec-indent-right", "btn-inc-indent-right", "input-para-indent-right", 0.1, 0, 10, 2);
+
+    document.querySelectorAll(".btn-chip-align").forEach(chip => {
+        chip.onclick = () => {
+            document.querySelectorAll(".btn-chip-align").forEach(c => c.classList.remove("active"));
+            chip.classList.add("active");
+        };
+    });
+
+    document.querySelectorAll(".btn-chip-ls").forEach(chip => {
+        chip.onclick = () => {
+            const input = document.getElementById("input-para-line-spacing");
+            if (input) input.value = parseFloat(chip.getAttribute("data-ls"));
+            syncParagraphChips();
+        };
+    });
+
+    document.querySelectorAll(".btn-chip-spacing").forEach(chip => {
+        chip.onclick = () => {
+            const beforeIn = document.getElementById("input-para-space-before");
+            const afterIn = document.getElementById("input-para-space-after");
+            if (beforeIn) beforeIn.value = parseFloat(chip.getAttribute("data-before"));
+            if (afterIn) afterIn.value = parseFloat(chip.getAttribute("data-after"));
+            syncParagraphChips();
+        };
+    });
+
+    document.querySelectorAll(".btn-chip-indent").forEach(chip => {
+        chip.onclick = () => {
+            const firstIn = document.getElementById("input-para-indent-first");
+            const leftIn = document.getElementById("input-para-indent-left");
+            const rightIn = document.getElementById("input-para-indent-right");
+            if (firstIn) firstIn.value = parseFloat(chip.getAttribute("data-first"));
+            if (leftIn) leftIn.value = parseFloat(chip.getAttribute("data-left"));
+            if (rightIn) rightIn.value = parseFloat(chip.getAttribute("data-right"));
+            syncParagraphChips();
+        };
+    });
+
+    const setParaPreset = (align, ls, fontSize, before, after, first, left, right) => {
+        document.querySelectorAll(".btn-chip-align").forEach(c => {
+            c.classList.toggle("active", c.getAttribute("data-align") === align);
+        });
+        const setVal = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.value = val;
+        };
+        setVal("input-para-line-spacing", ls);
+        setVal("input-para-font-size", fontSize);
+        setVal("input-para-space-before", before);
+        setVal("input-para-space-after", after);
+        setVal("input-para-indent-first", first);
+        setVal("input-para-indent-left", left);
+        setVal("input-para-indent-right", right);
+        syncParagraphChips();
+    };
+
+    const btnThesis = document.getElementById("btn-para-preset-thesis");
+    if (btnThesis) btnThesis.onclick = () => setParaPreset("Justified", 1.5, 13, 0, 6, 1.27, 0, 0);
+
+    const btnReset = document.getElementById("btn-para-preset-reset");
+    if (btnReset) btnReset.onclick = () => setParaPreset("keep", 1, 13, 0, 0, 0, 0, 0);
+}
+
+/**
+ * Đồng bộ trạng thái active cho các nút gợi ý Paragraph
+ */
+function syncParagraphChips() {
+    const opts = getParagraphOptions();
+    document.querySelectorAll(".btn-chip-ls").forEach(c => {
+        c.classList.toggle("active", Math.abs(parseFloat(c.getAttribute("data-ls")) - opts.lineSpacing) < 0.01);
+    });
+    document.querySelectorAll(".btn-chip-spacing").forEach(c => {
+        const b = parseFloat(c.getAttribute("data-before"));
+        const a = parseFloat(c.getAttribute("data-after"));
+        c.classList.toggle("active", Math.abs(b - opts.spaceBefore) < 0.01 && Math.abs(a - opts.spaceAfter) < 0.01);
+    });
+    document.querySelectorAll(".btn-chip-indent").forEach(c => {
+        const f = parseFloat(c.getAttribute("data-first"));
+        const l = parseFloat(c.getAttribute("data-left"));
+        const r = parseFloat(c.getAttribute("data-right"));
+        c.classList.toggle(
+            "active",
+            Math.abs(f - opts.firstLineIndentCm) < 0.01 &&
+            Math.abs(l - opts.leftIndentCm) < 0.01 &&
+            Math.abs(r - opts.rightIndentCm) < 0.01
+        );
+    });
+}
+
+/**
+ * Lấy toàn bộ cấu hình định dạng Đoạn văn (Paragraph)
+ */
+function getParagraphOptions() {
+    const numVal = (id, def, minVal = -Infinity) => {
+        const el = document.getElementById(id);
+        const v = parseFloat(el ? el.value : def);
+        return (isNaN(v) || v < minVal) ? def : v;
+    };
+    const activeAlign = document.querySelector(".btn-chip-align.active");
+    const chkFont = document.getElementById("chk-para-apply-font");
+    const chkTable = document.getElementById("chk-apply-para-to-table");
+
+    return {
+        alignment: activeAlign ? activeAlign.getAttribute("data-align") : "Justified",
+        lineSpacing: numVal("input-para-line-spacing", 1.5, 0.5),
+        fontSize: numVal("input-para-font-size", 13, 6),
+        applyFont: chkFont ? chkFont.checked : true,
+        spaceBefore: numVal("input-para-space-before", 0, 0),
+        spaceAfter: numVal("input-para-space-after", 6, 0),
+        firstLineIndentCm: numVal("input-para-indent-first", 1.27),
+        leftIndentCm: numVal("input-para-indent-left", 0, 0),
+        rightIndentCm: numVal("input-para-indent-right", 0, 0),
+        applyToTable: chkTable ? chkTable.checked : false,
+    };
+}
+
+/**
  * Hiển thị thông báo trạng thái trên Task Pane
  * @param {string} message - Nội dung thông báo
  * @param {"info" | "success" | "warning" | "error"} type - Loại thông báo
@@ -274,6 +424,8 @@ function setButtonsDisabled(disabled) {
     document.getElementById("btn-format-all").disabled = disabled;
     const btnQH = document.getElementById("btn-format-quochieu");
     if (btnQH) btnQH.disabled = disabled;
+    const btnPara = document.getElementById("btn-format-paragraphs");
+    if (btnPara) btnPara.disabled = disabled;
 }
 
 /**
@@ -395,6 +547,7 @@ async function formatSingleTable(table, context) {
     await context.sync();
 
     // 5. Duyệt từng ô và áp dụng định dạng đoạn văn & font chữ
+    const paraOpts = getParagraphOptions();
     for (let r = 0; r < rows.items.length; r++) {
         const isHeaderRow = (r === 0);
         const cells = rows.items[r].cells.items;
@@ -412,15 +565,24 @@ async function formatSingleTable(table, context) {
                 para.font.size = fontSize;
                 para.font.color = "#000000";
 
-                // Khoảng cách đoạn: Before = 0, After = 0, Line spacing = dòng đơn theo cỡ chữ
-                para.spaceBefore = 0;
-                para.spaceAfter = 0;
-                para.lineSpacing = fontSize;
+                if (paraOpts.applyToTable) {
+                    para.spaceBefore = paraOpts.spaceBefore;
+                    para.spaceAfter = paraOpts.spaceAfter;
+                    para.lineSpacing = paraOpts.lineSpacing * 12;
+                    para.firstLineIndent = paraOpts.firstLineIndentCm * PT_PER_CM;
+                    para.leftIndent = paraOpts.leftIndentCm * PT_PER_CM;
+                    para.rightIndent = paraOpts.rightIndentCm * PT_PER_CM;
+                } else {
+                    // Khoảng cách đoạn: Before = 0, After = 0, Line spacing = dòng đơn theo cỡ chữ
+                    para.spaceBefore = 0;
+                    para.spaceAfter = 0;
+                    para.lineSpacing = fontSize;
 
-                // Quy chuẩn: Loại bỏ hoàn toàn lùi đầu dòng (firstLineIndent) và thụt lề trong ô bảng
-                para.firstLineIndent = 0;
-                para.leftIndent = 0;
-                para.rightIndent = 0;
+                    // Quy chuẩn: Loại bỏ hoàn toàn lùi đầu dòng (firstLineIndent) và thụt lề trong ô bảng
+                    para.firstLineIndent = 0;
+                    para.leftIndent = 0;
+                    para.rightIndent = 0;
+                }
 
                 // Quy tắc cho từng hàng/cột:
                 if (isHeaderRow) {
@@ -820,6 +982,64 @@ async function formatQuocHieuButton() {
         });
     } catch (error) {
         console.error("Lỗi:", error);
+        showStatus(`Lỗi: ${error.message || error}`, "error");
+    } finally {
+        setButtonsDisabled(false);
+    }
+}
+
+/**
+ * Nút bấm: Định dạng các đoạn văn bản (Paragraph) đang chọn
+ */
+async function formatSelectedParagraphs() {
+    setButtonsDisabled(true);
+    showStatus("Đang định dạng các đoạn văn bản đang chọn...", "info");
+
+    try {
+        await Word.run(async (context) => {
+            const selection = context.document.getSelection();
+            const paragraphs = selection.paragraphs;
+            paragraphs.load("items");
+            await context.sync();
+
+            if (paragraphs.items.length === 0) {
+                showStatus("Vui lòng đặt con trỏ hoặc bôi đen đoạn văn bản cần định dạng!", "warning");
+                return;
+            }
+
+            const opts = getParagraphOptions();
+            const PT_PER_CM = 72 / 2.54;
+
+            for (let i = 0; i < paragraphs.items.length; i++) {
+                const para = paragraphs.items[i];
+
+                if (opts.applyFont) {
+                    para.font.name = "Times New Roman";
+                    para.font.size = opts.fontSize;
+                    para.font.color = "#000000";
+                }
+
+                if (opts.alignment !== "keep") {
+                    para.alignment = opts.alignment;
+                }
+
+                para.spaceBefore = opts.spaceBefore;
+                para.spaceAfter = opts.spaceAfter;
+                para.lineSpacing = opts.lineSpacing * 12; // Office.js: 12pt = 1.0x
+
+                para.firstLineIndent = opts.firstLineIndentCm * PT_PER_CM;
+                para.leftIndent = opts.leftIndentCm * PT_PER_CM;
+                para.rightIndent = opts.rightIndentCm * PT_PER_CM;
+            }
+
+            await context.sync();
+            showStatus(
+                `Đã định dạng ${paragraphs.items.length} đoạn văn (Giãn ${opts.lineSpacing}x, Before ${opts.spaceBefore}pt, After ${opts.spaceAfter}pt, Đầu dòng ${opts.firstLineIndentCm}cm)!`,
+                "success"
+            );
+        });
+    } catch (error) {
+        console.error("Lỗi khi định dạng đoạn văn:", error);
         showStatus(`Lỗi: ${error.message || error}`, "error");
     } finally {
         setButtonsDisabled(false);

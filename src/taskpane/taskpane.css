@@ -252,7 +252,7 @@ body {
     gap: 6px;
 }
 
-.btn-chip, .btn-chip-margin {
+.btn-chip, .btn-chip-margin, .btn-chip-align, .btn-chip-ls, .btn-chip-spacing, .btn-chip-indent {
     flex: 1;
     background: #ffffff;
     border: 1px solid #cbd5e1;
@@ -266,16 +266,22 @@ body {
     text-align: center;
 }
 
-.btn-chip:hover, .btn-chip-margin:hover {
+.btn-chip:hover, .btn-chip-margin:hover, .btn-chip-align:hover, .btn-chip-ls:hover, .btn-chip-spacing:hover, .btn-chip-indent:hover {
     background: #f1f5f9;
     border-color: #94a3b8;
 }
 
-.btn-chip.active, .btn-chip-margin.active {
+.btn-chip.active, .btn-chip-margin.active, .btn-chip-align.active, .btn-chip-ls.active, .btn-chip-spacing.active, .btn-chip-indent.active {
     background: #eff6ff;
     border-color: var(--primary-color);
     color: var(--primary-color);
     font-weight: 600;
+}
+
+.para-header-presets {
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 
 .checkbox-row {
@@ -360,6 +366,15 @@ body {
 .btn-outline:hover:not(:disabled) {
     background-color: #eff6ff;
     border-color: #60a5fa;
+}
+
+.btn-paragraph {
+    background-color: #0f766e;
+    color: #ffffff;
+}
+
+.btn-paragraph:hover:not(:disabled) {
+    background-color: #115e59;
 }
 
 .quoc-hieu-rule {
