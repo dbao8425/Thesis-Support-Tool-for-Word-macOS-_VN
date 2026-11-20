@@ -32,11 +32,11 @@ if not exist "%TARGET_XML%" (
 )
 
 echo [2/3] Dang dang ky Add-in vao Microsoft Word...
-reg add "HKCU\Software\Microsoft\Office.0\WEF\Developer" /v "b785d0d8-5f2d-424a-9e12-427df18bb01a" /t REG_SZ /d "%TARGET_XML%" /f >nul 2>&1
-reg add "HKCU\Software\Microsoft\Office.0\WEF\Developer" /v "b785d0d8-5f2d-424a-9e12-427df18bb01a" /t REG_SZ /d "%TARGET_XML%" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Office\16.0\WEF\Developer" /v "b785d0d8-5f2d-424a-9e12-427df18bb01a" /t REG_SZ /d "%TARGET_XML%" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Office\15.0\WEF\Developer" /v "b785d0d8-5f2d-424a-9e12-427df18bb01a" /t REG_SZ /d "%TARGET_XML%" /f >nul 2>&1
 
 echo [3/3] Dang lam moi bo nho dem Word...
-powershell -NoProfile -Command "Remove-Item -Path ":LOCALAPPDATA\Microsoft\Office.0\WEF785d0d8-5f2d-424a-9e12-427df18bb01a*" -Recurse -Force -ErrorAction SilentlyContinue"
+powershell -NoProfile -Command "Remove-Item -Path \"$env:LOCALAPPDATA\Microsoft\Office\16.0\WEF\b785d0d8-5f2d-424a-9e12-427df18bb01a*\" -Recurse -Force -ErrorAction SilentlyContinue"
 
 echo.
 echo ========================================================
@@ -44,11 +44,11 @@ echo        CAI DAT THANH CONG CHO WINDOWS!
 echo ========================================================
 echo.
 echo HUONG DAN SU DUNG:
-echo 1. Hay mo (hoac khoi dong lai) Microsoft Word.
+echo 1. Hay tat han Microsoft Word (neu dang mo) roi mo lai.
 echo 2. Tren thanh Ribbon tren cung, ban se thay tab: "Duy Bao".
 echo 3. Bam nut "Format Tables" de mo bang cong cu.
 echo.
-echo * Luu y: Neu Word dang mo, hay tat han Word roi mo lai.
+echo * Luu y: Neu Word dang mo, bat buoc phai tat han roi mo lai moi hien tab.
 echo ========================================================
 echo.
 pause

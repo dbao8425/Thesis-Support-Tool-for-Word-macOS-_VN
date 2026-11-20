@@ -109,6 +109,35 @@
                 <button type="button" class="btn-chip-margin" data-top="0.15" data-bottom="0.15" data-left="0.1" data-right="0.1">T/D 0.15 T/P 0.1</button>
             </div>
 
+            <!-- Độ cao hàng & Độ rộng bảng (tùy chọn) -->
+            <div style="margin-top: 6px; padding-top: 8px; border-top: 1px dashed #e2e8f0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <span class="config-label" style="font-weight: 600;">Kích thước bảng (cm):</span>
+                    <button type="button" id="btn-clear-dimensions" class="btn-clear-link" title="Xóa để giữ nguyên kích thước hiện tại của bảng">Bỏ trống</button>
+                </div>
+                <div class="margin-grid">
+                    <div class="margin-item">
+                        <label for="input-row-height" class="margin-label">Cao:</label>
+                        <div class="stepper-box compact">
+                            <button type="button" id="btn-dec-height" class="btn-step" title="Giảm 0.1cm">−</button>
+                            <input type="number" id="input-row-height" class="input-margin input-dim" value="" placeholder="—" min="0.1" max="20" step="0.1">
+                            <span class="unit-text">cm</span>
+                            <button type="button" id="btn-inc-height" class="btn-step" title="Tăng 0.1cm">+</button>
+                        </div>
+                    </div>
+                    <div class="margin-item">
+                        <label for="input-table-width" class="margin-label">Rộng:</label>
+                        <div class="stepper-box compact">
+                            <button type="button" id="btn-dec-width" class="btn-step" title="Giảm 0.5cm">−</button>
+                            <input type="number" id="input-table-width" class="input-margin input-dim" value="" placeholder="—" min="1" max="30" step="0.5">
+                            <span class="unit-text">cm</span>
+                            <button type="button" id="btn-inc-width" class="btn-step" title="Tăng 0.5cm">+</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="dim-hint">Bỏ trống ô nào sẽ giữ nguyên thiết lập hiện tại của bảng.</div>
+            </div>
+
             <!-- Tùy chọn căn đều cột số liệu -->
             <div class="checkbox-row" style="margin-top: 4px; padding-top: 8px; border-top: 1px dashed #e2e8f0;">
                 <label class="custom-checkbox">
@@ -147,6 +176,7 @@
             <h2 class="rules-title">Quy chuẩn áp dụng:</h2>
             <ul class="rules-list">
                 <li><strong>Bảng dữ liệu:</strong> Table Grid, Times New Roman, AutoFit Window, căn giữa dọc ô, Hàng 1 in đậm căn giữa, Cột 1 căn trái, Cột 2+ căn phải.</li>
+                <li><strong>Lùi đầu dòng:</strong> Loại bỏ hoàn toàn lùi đầu dòng (First Line Indent = 0) và thụt lề cho toàn bộ nội dung trong bảng.</li>
                 <li><strong>Lề ô (Cell margin):</strong> Tùy chỉnh tự do theo đơn vị cm riêng biệt từng cạnh (Trên, Dưới, Trái, Phải).</li>
                 <li><strong>Căn đều cột số liệu:</strong> Chia đều chiều rộng các cột số liệu, bảo đảm số không tràn hay nhảy dòng.</li>
                 <li class="quoc-hieu-rule">

@@ -61,6 +61,36 @@ Office.onReady((info) => {
                 setAllMargins(top, bottom, left, right);
             };
         });
+
+        // Xử lý nút tăng / giảm / bỏ trống cho độ cao hàng & độ rộng bảng (tùy chọn)
+        const bindOptionalDimStepper = (decId, incId, inputId, step, min, max, fallbackInit) => {
+            const btnDec = document.getElementById(decId);
+            const btnInc = document.getElementById(incId);
+            const input = document.getElementById(inputId);
+            const adjust = (delta) => {
+                if (!input) return;
+                const raw = input.value.trim();
+                const current = raw === "" ? fallbackInit : parseFloat(raw);
+                const next = isNaN(current) ? fallbackInit : (raw === "" ? fallbackInit : current + delta);
+                const clamped = Math.max(min, Math.min(max, Math.round(next * 100) / 100));
+                input.value = clamped;
+            };
+            if (btnDec) btnDec.onclick = () => adjust(-step);
+            if (btnInc) btnInc.onclick = () => adjust(step);
+        };
+
+        bindOptionalDimStepper("btn-dec-height", "btn-inc-height", "input-row-height", 0.1, 0.1, 20, 0.7);
+        bindOptionalDimStepper("btn-dec-width", "btn-inc-width", "input-table-width", 0.5, 1, 30, 16.5);
+
+        const btnClearDims = document.getElementById("btn-clear-dimensions");
+        if (btnClearDims) {
+            btnClearDims.onclick = () => {
+                const h = document.getElementById("input-row-height");
+                const w = document.getElementById("input-table-width");
+                if (h) h.value = "";
+                if (w) w.value = "";
+            };
+        }
     }
 });
 
@@ -192,6 +222,27 @@ function getMarginsDescription() {
 }
 
 /**
+ * Lấy giá trị độ cao hàng & độ rộng bảng tùy chọn (đơn vị cm).
+ * Trả về null nếu người dùng bỏ trống (không nhập).
+ * @returns {{rowHeightCm: number | null, tableWidthCm: number | null}}
+ */
+function getOptionalDimensions() {
+    const parseOptional = (id) => {
+        const input = document.getElementById(id);
+        if (!input) return null;
+        const raw = input.value.trim();
+        if (raw === "") return null;
+        const val = parseFloat(raw);
+        return (!isNaN(val) && val > 0) ? val : null;
+    };
+
+    return {
+        rowHeightCm: parseOptional("input-row-height"),
+        tableWidthCm: parseOptional("input-table-width"),
+    };
+}
+
+/**
  * Hiển thị thông báo trạng thái trên Task Pane
  * @param {string} message - Nội dung thông báo
  * @param {"info" | "success" | "warning" | "error"} type - Loại thông báo
@@ -272,6 +323,8 @@ async function formatSingleTable(table, context) {
     const fontSize = getSelectedFontSize();
     const chkEqual = document.getElementById("chk-equal-numeric-cols");
     const shouldEqualCols = chkEqual ? chkEqual.checked : true;
+    const dims = getOptionalDimensions();
+    const PT_PER_CM = 72 / 2.54;
 
     // 1. Áp dụng Table Style: "Table Grid"
     try {
@@ -306,6 +359,16 @@ async function formatSingleTable(table, context) {
 
     if (rows.items.length === 0) {
         return;
+    }
+
+    // Áp dụng độ cao hàng nếu người dùng có nhập giá trị (bỏ trống -> giữ nguyên)
+    if (dims.rowHeightCm !== null) {
+        const rowHeightPt = dims.rowHeightCm * PT_PER_CM;
+        for (let r = 0; r < rows.items.length; r++) {
+            try {
+                rows.items[r].preferredHeight = rowHeightPt;
+            } catch (e) {}
+        }
     }
 
     // 3. Load các ô (cells) cho từng hàng
@@ -354,6 +417,11 @@ async function formatSingleTable(table, context) {
                 para.spaceAfter = 0;
                 para.lineSpacing = fontSize;
 
+                // Quy chuẩn: Loại bỏ hoàn toàn lùi đầu dòng (firstLineIndent) và thụt lề trong ô bảng
+                para.firstLineIndent = 0;
+                para.leftIndent = 0;
+                para.rightIndent = 0;
+
                 // Quy tắc cho từng hàng/cột:
                 if (isHeaderRow) {
                     para.font.bold = true;
@@ -371,14 +439,23 @@ async function formatSingleTable(table, context) {
         }
     }
 
-    // 6. Căn đều kích thước các cột số liệu (Cột 2 trở đi) bằng Word.TableCell.columnWidth
+    // 6. Điều chỉnh độ rộng bảng (nếu có nhập) & căn đều kích thước các cột số liệu
+    const customWidthPt = (dims.tableWidthCm !== null) ? (dims.tableWidthCm * PT_PER_CM) : null;
+    if (customWidthPt !== null) {
+        try {
+            table.width = customWidthPt;
+        } catch (e) {
+            console.warn("Lỗi khi đặt độ rộng bảng:", e);
+        }
+    }
+
     if (shouldEqualCols && rows.items.length > 0) {
         try {
             const colCount = rows.items[0].cells.items.length;
 
             if (colCount >= 2) {
-                // Chiều rộng trang chuẩn A4 (lề 2.5cm) là ~468pt
-                const totalWidth = 468;
+                // Nếu người dùng nhập độ rộng bảng thì chia cột theo độ rộng đó; nếu bỏ trống thì dùng chuẩn A4 (~468pt)
+                const totalWidth = customWidthPt !== null ? customWidthPt : 468;
 
                 // Tỷ lệ phân bổ cho Cột 1 (nhãn/chỉ tiêu):
                 // Bảng càng nhiều cột số thì cột nhãn càng co lại hợp lý
@@ -403,8 +480,8 @@ async function formatSingleTable(table, context) {
         } catch (e) {
             console.warn("Lỗi khi điều chỉnh độ rộng cột:", e);
         }
-    } else {
-        // Chỉ chạy AutoFit Window tự do nếu người dùng tắt tính năng căn đều cột
+    } else if (customWidthPt === null) {
+        // Chỉ chạy AutoFit Window tự do nếu người dùng tắt tính năng căn đều cột VÀ không nhập độ rộng tùy chỉnh
         try {
             if (typeof table.autoFitWindow === "function") {
                 table.autoFitWindow();
@@ -514,6 +591,11 @@ async function formatQuocHieuTable(table, context) {
                 para.spaceBefore = 0;
                 para.spaceAfter = 0;
                 para.lineSpacing = 12;
+
+                // Quy chuẩn: Loại bỏ hoàn toàn lùi đầu dòng và thụt lề trong ô bảng
+                para.firstLineIndent = 0;
+                para.leftIndent = 0;
+                para.rightIndent = 0;
 
                 // Cả hai cột đều CĂN GIỮA (Centered)
                 para.alignment = "Centered";

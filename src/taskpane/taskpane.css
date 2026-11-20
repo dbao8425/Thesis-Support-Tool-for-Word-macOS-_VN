@@ -217,6 +217,36 @@ body {
     margin: 0;
 }
 
+.input-dim {
+    width: 36px;
+}
+
+.input-dim::placeholder {
+    color: #94a3b8;
+    font-weight: 400;
+}
+
+.btn-clear-link {
+    background: none;
+    border: none;
+    font-size: 11px;
+    color: var(--primary-color);
+    cursor: pointer;
+    padding: 0 2px;
+    text-decoration: underline;
+}
+
+.btn-clear-link:hover {
+    color: var(--primary-hover);
+}
+
+.dim-hint {
+    font-size: 10.5px;
+    color: #64748b;
+    margin-top: 4px;
+    font-style: italic;
+}
+
 .preset-group {
     display: flex;
     gap: 6px;

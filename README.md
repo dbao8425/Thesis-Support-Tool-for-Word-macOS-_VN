@@ -14,13 +14,19 @@ Add-in hoạt động hoàn toàn trên nền tảng đám mây (GitHub Pages), 
 3. **Lề ô (Cell Margin) tùy chỉnh 4 cạnh độc lập:**
    - Hỗ trợ nhập riêng từng cạnh: **Trên**, **Dưới**, **Trái**, **Phải** (đơn vị `cm`).
    - Có nút tăng giảm `±0.05cm` và gợi ý nhanh: `Đều 0.1cm`, `Đều 0.15cm`, `Đều 0.2cm (Chuẩn)`, `T/D 0.15 T/P 0.1`.
-4. **Tự động căn đều kích thước các cột số liệu:**
-   - Chia đều chiều rộng các cột dữ liệu (từ Cột 2 trở đi) nhằm đảm bảo số liệu không bị tràn hay nhảy dòng.
+4. **Kích thước bảng (Table Dimensions - Tùy chọn):**
+   - **Độ cao hàng (Row Height):** Nhập số đo theo `cm` (tăng giảm `±0.1cm`).
+   - **Độ rộng bảng (Table Width):** Nhập số đo theo `cm` (tăng giảm `±0.5cm`).
+   - Có nút **"Bỏ trống"** để giữ nguyên kích thước ban đầu của bảng nếu không muốn can thiệp.
+5. **Tự động căn đều kích thước các cột số liệu:**
+   - Chia đều chiều rộng các cột dữ liệu (từ Cột 2 trở đi) theo độ rộng tùy chỉnh (hoặc khổ A4 chuẩn) nhằm đảm bảo số liệu không bị tràn hay nhảy dòng.
    - Tự động điều chỉnh tỷ lệ cột nhãn (Cột 1) phù hợp theo số lượng cột.
-5. **Khoảng cách đoạn (Paragraph spacing):**
+6. **Khoảng cách đoạn & Lùi đầu dòng (Paragraph formatting):**
    - `Space Before`: `0pt`
    - `Space After`: `0pt`
    - `Line Spacing`: `Single` (dòng đơn theo cỡ chữ)
+   - `First Line Indent`: `0pt` (loại bỏ hoàn toàn lùi đầu dòng cho toàn bộ văn bản trong bảng)
+   - `Left Indent` / `Right Indent`: `0pt` (loại bỏ thụt lề)
 6. **Căn lề:**
    - **Hàng 1 (Hàng tiêu đề):** In đậm (`Bold`), Căn giữa (`Center`).
    - **Cột 1 (Từ hàng 2 trở đi):** Căn trái (`Left`).
