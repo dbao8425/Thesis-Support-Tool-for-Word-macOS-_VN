@@ -446,6 +446,25 @@ function isQuocHieuTable(values) {
 }
 
 /**
+ * Đo chiều rộng văn bản (đơn vị pt) để căn cột số liệu vừa đúng 1 dòng
+ * @param {string} text
+ * @param {number} fontSizePt
+ * @param {boolean} isBold
+ * @returns {number}
+ */
+function measureTextWidthPt(text, fontSizePt, isBold) {
+    if (!text) return 0;
+    if (!measureTextWidthPt._ctx) {
+        const canvas = document.createElement("canvas");
+        measureTextWidthPt._ctx = canvas.getContext("2d");
+    }
+    const ctx = measureTextWidthPt._ctx;
+    if (!ctx) return text.length * fontSizePt * 0.55;
+    ctx.font = `${isBold ? "bold " : ""}${fontSizePt}pt "Times New Roman", Times, serif`;
+    return ctx.measureText(text).width * 0.75;
+}
+
+/**
  * 1. ĐỊNH DẠNG BẢNG DỮ LIỆU KHÓA LUẬN (Data Table)
  * - Cỡ chữ linh hoạt theo ô nhập (mặc định 11pt, có thể giảm xuống 10pt, 9pt...)
  * - Căn đều kích thước các cột số liệu (Cột 2 trở đi) để số không bị nhảy dòng
@@ -579,9 +598,18 @@ async function formatSingleTable(table, context) {
         }
     }
 
-    // 6. Điều chỉnh độ rộng bảng (nếu có nhập) & căn đều kích thước các cột số liệu
+    // 6. Điều chỉnh độ rộng bảng (nếu có nhập) & căn chỉnh kích thước các cột
     const customWidthPt = (dims.tableWidthCm !== null) ? (dims.tableWidthCm * PT_PER_CM) : null;
-    if (customWidthPt !== null) {
+    let currentTableWidthPt = null;
+    if (customWidthPt === null) {
+        try {
+            table.load("width");
+            await context.sync();
+            if (typeof table.width === "number" && table.width > 0) {
+                currentTableWidthPt = table.width;
+            }
+        } catch (e) {}
+    } else {
         try {
             table.width = customWidthPt;
         } catch (e) {
@@ -594,23 +622,53 @@ async function formatSingleTable(table, context) {
             const colCount = rows.items[0].cells.items.length;
 
             if (colCount >= 2) {
-                // Nếu người dùng nhập độ rộng bảng thì chia cột theo độ rộng đó; nếu bỏ trống thì dùng chuẩn A4 (~468pt)
-                const totalWidth = customWidthPt !== null ? customWidthPt : 468;
+                // Tổng chiều rộng bảng: ưu tiên độ rộng tùy chỉnh -> độ rộng hiện tại -> chuẩn A4 (~468pt)
+                const totalWidth = customWidthPt !== null
+                    ? customWidthPt
+                    : (currentTableWidthPt !== null ? currentTableWidthPt : 468);
 
-                // Tỷ lệ phân bổ cho Cột 1 (nhãn/chỉ tiêu):
-                // Bảng càng nhiều cột số thì cột nhãn càng co lại hợp lý
-                let labelRatio = 0.36;
-                if (colCount >= 7) labelRatio = 0.25;
-                else if (colCount >= 6) labelRatio = 0.28;
-                else if (colCount >= 5) labelRatio = 0.30;
-                else if (colCount >= 4) labelRatio = 0.33;
+                const cellExtraPt = leftPt + rightPt + (paraOpts.leftIndentCm + paraOpts.rightIndentCm) * PT_PER_CM + 5;
+                const colRequiredWidths = [];
 
-                const labelWidth = Math.round(totalWidth * labelRatio);
-                const numColWidth = Math.floor((totalWidth - labelWidth) / (colCount - 1));
+                // Xét các cột số liệu từ phải sang trái để đo độ rộng vừa đúng 1 hàng của ô
+                for (let c = colCount - 1; c >= 1; c--) {
+                    let maxColWidth = 24;
+                    for (let r = 0; r < rows.items.length; r++) {
+                        const rowCells = rows.items[r].cells.items;
+                        if (c >= rowCells.length) continue;
+                        const isHeader = (r === 0);
+                        const paras = rowCells[c].body.paragraphs.items;
+                        for (let p = 0; p < paras.length; p++) {
+                            const lines = (paras[p].text || "").split(/[\r\n]+/);
+                            for (let k = 0; k < lines.length; k++) {
+                                const lineText = lines[k].trim();
+                                if (!lineText) continue;
+                                const textPt = measureTextWidthPt(lineText, fontSize, isHeader);
+                                const firstIndentPt = isHeader ? 0 : Math.max(0, paraOpts.firstLineIndentCm) * PT_PER_CM;
+                                const needed = textPt + cellExtraPt + firstIndentPt;
+                                if (needed > maxColWidth) {
+                                    maxColWidth = needed;
+                                }
+                            }
+                        }
+                    }
+                    colRequiredWidths.push(maxColWidth);
+                }
 
-                // Gán columnWidth trực tiếp cho từng ô trong bảng (WordApi 1.3+ tương thích 100% Word for Mac)
+                // Distribute đều các cột số liệu theo độ rộng lớn nhất cần thiết để vừa 1 hàng
+                let numColWidth = Math.ceil(Math.max(...colRequiredWidths));
+                const minLabelWidth = Math.max(72, Math.round(totalWidth * 0.2));
+                if (totalWidth - numColWidth * (colCount - 1) < minLabelWidth) {
+                    numColWidth = Math.floor((totalWidth - minLabelWidth) / (colCount - 1));
+                }
+
+                // Cột chỉ tiêu (cột đầu tiên) nhận toàn bộ phần chiều rộng còn lại
+                const labelWidth = Math.max(minLabelWidth, Math.round(totalWidth - numColWidth * (colCount - 1)));
+
+                // Gán columnWidth trực tiếp cho từng ô trong bảng (WordApi 1.3+ tương thích 100% Word for Mac & Windows)
                 for (let r = 0; r < rows.items.length; r++) {
                     const rowCells = rows.items[r].cells.items;
+                    if (rowCells.length !== colCount) continue;
                     for (let c = 0; c < rowCells.length; c++) {
                         rowCells[c].columnWidth = (c === 0) ? labelWidth : numColWidth;
                     }
