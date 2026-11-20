@@ -628,12 +628,12 @@ async function formatSingleTable(table, context) {
                     ? customWidthPt
                     : (currentTableWidthPt !== null ? currentTableWidthPt : 468);
 
-                const cellExtraPt = leftPt + rightPt + (paraOpts.leftIndentCm + paraOpts.rightIndentCm) * PT_PER_CM + 5;
+                const cellExtraPt = leftPt + rightPt + (paraOpts.leftIndentCm + paraOpts.rightIndentCm) * PT_PER_CM + 1.5;
                 const colRequiredWidths = [];
 
-                // Xét các cột số liệu từ phải sang trái để đo độ rộng vừa đúng 1 hàng của ô
+                // Xét các cột số liệu từ phải sang trái để đo độ rộng nhỏ nhất vừa đúng 1 hàng của ô
                 for (let c = colCount - 1; c >= 1; c--) {
-                    let maxColWidth = 24;
+                    let maxColWidth = 12;
                     for (let r = 0; r < rows.items.length; r++) {
                         const rowCells = rows.items[r].cells.items;
                         if (c >= rowCells.length) continue;
@@ -656,15 +656,15 @@ async function formatSingleTable(table, context) {
                     colRequiredWidths.push(maxColWidth);
                 }
 
-                // Distribute đều các cột số liệu theo độ rộng lớn nhất cần thiết để vừa 1 hàng
-                let numColWidth = Math.ceil(Math.max(...colRequiredWidths));
+                // Distribute đều các cột số liệu theo độ rộng nhỏ nhất có thể mà vẫn vừa 1 hàng
+                let numColWidth = Math.ceil(Math.max(...colRequiredWidths) * 2) / 2;
                 const minLabelWidth = Math.max(72, Math.round(totalWidth * 0.2));
                 if (totalWidth - numColWidth * (colCount - 1) < minLabelWidth) {
-                    numColWidth = Math.floor((totalWidth - minLabelWidth) / (colCount - 1));
+                    numColWidth = Math.floor(((totalWidth - minLabelWidth) / (colCount - 1)) * 2) / 2;
                 }
 
                 // Cột chỉ tiêu (cột đầu tiên) nhận toàn bộ phần chiều rộng còn lại
-                const labelWidth = Math.max(minLabelWidth, Math.round(totalWidth - numColWidth * (colCount - 1)));
+                const labelWidth = Math.max(minLabelWidth, Math.round((totalWidth - numColWidth * (colCount - 1)) * 10) / 10);
 
                 // Gán columnWidth trực tiếp cho từng ô trong bảng (WordApi 1.3+ tương thích 100% Word for Mac & Windows)
                 for (let r = 0; r < rows.items.length; r++) {
