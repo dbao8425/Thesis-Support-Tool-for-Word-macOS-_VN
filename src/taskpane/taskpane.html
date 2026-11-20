@@ -147,63 +147,30 @@
             </div>
         </section>
 
-        <!-- Cấu hình Paragraph -->
+        <!-- Cấu hình Paragraph trong bảng -->
         <section class="config-card" id="paragraph-config-card">
             <div class="config-header">
-                <span class="config-title">¶ Tùy chỉnh Đoạn văn (Paragraph)</span>
-                <div class="para-header-presets">
-                    <button type="button" id="btn-para-preset-thesis" class="btn-clear-link" title="Times New Roman 13pt, Justify, Giãn 1.5, Đầu dòng 1.27cm, Sau 6pt">Chuẩn khóa luận</button>
-                    <span style="color: #cbd5e1;">|</span>
-                    <button type="button" id="btn-para-preset-reset" class="btn-clear-link" title="Đặt giãn dòng 1.0, Spacing 0pt, Thụt lề 0cm">Reset 0</button>
-                </div>
+                <span class="config-title">¶ Paragraph nội dung bảng</span>
+                <button type="button" id="btn-para-preset-reset" class="btn-clear-link" title="Đặt lại chuẩn bảng: Giãn 1.0, Spacing 0pt, Thụt lề 0cm">Reset chuẩn</button>
             </div>
 
-            <!-- Căn lề ngang (Alignment) -->
+            <!-- Giãn dòng -->
             <div>
-                <span class="config-label" style="font-weight: 600; font-size: 11.5px;">Căn lề (Alignment):</span>
-                <div class="preset-group" style="margin-top: 4px;">
-                    <button type="button" class="btn-chip-align" data-align="keep">Giữ</button>
-                    <button type="button" class="btn-chip-align" data-align="Left">Trái</button>
-                    <button type="button" class="btn-chip-align" data-align="Centered">Giữa</button>
-                    <button type="button" class="btn-chip-align" data-align="Right">Phải</button>
-                    <button type="button" class="btn-chip-align active" data-align="Justified">Đều</button>
-                </div>
-            </div>
-
-            <!-- Giãn dòng & Cỡ chữ đoạn văn -->
-            <div style="margin-top: 2px; padding-top: 8px; border-top: 1px dashed #e2e8f0;">
-                <div class="margin-grid" style="margin-top: 0;">
-                    <div class="margin-item">
-                        <label for="input-para-line-spacing" class="margin-label">Giãn:</label>
-                        <div class="stepper-box compact">
-                            <button type="button" id="btn-dec-line-spacing" class="btn-step" title="Giảm 0.1">−</button>
-                            <input type="number" id="input-para-line-spacing" class="input-margin" value="1.5" min="0.5" max="5" step="0.05">
-                            <span class="unit-text">x</span>
-                            <button type="button" id="btn-inc-line-spacing" class="btn-step" title="Tăng 0.1">+</button>
-                        </div>
-                    </div>
-                    <div class="margin-item">
-                        <label for="input-para-font-size" class="margin-label">Cỡ:</label>
-                        <div class="stepper-box compact">
-                            <button type="button" id="btn-dec-para-font" class="btn-step" title="Giảm 0.5pt">−</button>
-                            <input type="number" id="input-para-font-size" class="input-margin" value="13" min="6" max="72" step="0.5">
-                            <span class="unit-text">pt</span>
-                            <button type="button" id="btn-inc-para-font" class="btn-step" title="Tăng 0.5pt">+</button>
-                        </div>
+                <div class="config-row">
+                    <label for="input-para-line-spacing" class="config-label" style="font-weight: 600; font-size: 11.5px;">Giãn dòng (Line spacing):</label>
+                    <div class="stepper-box compact">
+                        <button type="button" id="btn-dec-line-spacing" class="btn-step" title="Giảm 0.05">−</button>
+                        <input type="number" id="input-para-line-spacing" class="input-margin" value="1" min="0.5" max="5" step="0.05">
+                        <span class="unit-text">x</span>
+                        <button type="button" id="btn-inc-line-spacing" class="btn-step" title="Tăng 0.05">+</button>
                     </div>
                 </div>
                 <div class="preset-group" style="margin-top: 6px;">
-                    <button type="button" class="btn-chip-ls" data-ls="1">1.0</button>
+                    <button type="button" class="btn-chip-ls active" data-ls="1">1.0 (Đơn)</button>
                     <button type="button" class="btn-chip-ls" data-ls="1.15">1.15</button>
                     <button type="button" class="btn-chip-ls" data-ls="1.3">1.3</button>
-                    <button type="button" class="btn-chip-ls active" data-ls="1.5">1.5</button>
+                    <button type="button" class="btn-chip-ls" data-ls="1.5">1.5</button>
                     <button type="button" class="btn-chip-ls" data-ls="2">2.0</button>
-                </div>
-                <div class="checkbox-row" style="margin-top: 6px;">
-                    <label class="custom-checkbox">
-                        <input type="checkbox" id="chk-para-apply-font" checked>
-                        <span class="checkbox-label">Áp dụng font Times New Roman & cỡ chữ trên</span>
-                    </label>
                 </div>
             </div>
 
@@ -224,17 +191,17 @@
                         <label for="input-para-space-after" class="margin-label">Sau:</label>
                         <div class="stepper-box compact">
                             <button type="button" id="btn-dec-space-after" class="btn-step" title="Giảm 1pt">−</button>
-                            <input type="number" id="input-para-space-after" class="input-margin" value="6" min="0" max="100" step="1">
+                            <input type="number" id="input-para-space-after" class="input-margin" value="0" min="0" max="100" step="1">
                             <span class="unit-text">pt</span>
                             <button type="button" id="btn-inc-space-after" class="btn-step" title="Tăng 1pt">+</button>
                         </div>
                     </div>
                 </div>
                 <div class="preset-group" style="margin-top: 6px;">
-                    <button type="button" class="btn-chip-spacing" data-before="0" data-after="0">0 / 0</button>
+                    <button type="button" class="btn-chip-spacing active" data-before="0" data-after="0">0 / 0</button>
+                    <button type="button" class="btn-chip-spacing" data-before="2" data-after="2">2 / 2</button>
                     <button type="button" class="btn-chip-spacing" data-before="3" data-after="3">3 / 3</button>
-                    <button type="button" class="btn-chip-spacing active" data-before="0" data-after="6">0 / 6</button>
-                    <button type="button" class="btn-chip-spacing" data-before="6" data-after="6">6 / 6</button>
+                    <button type="button" class="btn-chip-spacing" data-before="0" data-after="6">0 / 6</button>
                 </div>
             </div>
 
@@ -246,7 +213,7 @@
                         <label for="input-para-indent-first" class="margin-label">Đầu dòng (First line):</label>
                         <div class="stepper-box compact">
                             <button type="button" id="btn-dec-indent-first" class="btn-step" title="Giảm 0.1cm">−</button>
-                            <input type="number" id="input-para-indent-first" class="input-margin" style="width: 40px;" value="1.27" min="-5" max="10" step="0.1">
+                            <input type="number" id="input-para-indent-first" class="input-margin" style="width: 40px;" value="0" min="-5" max="10" step="0.1">
                             <span class="unit-text">cm</span>
                             <button type="button" id="btn-inc-indent-first" class="btn-step" title="Tăng 0.1cm">+</button>
                         </div>
@@ -271,18 +238,21 @@
                     </div>
                 </div>
                 <div class="preset-group" style="margin-top: 6px;">
-                    <button type="button" class="btn-chip-indent" data-first="0" data-left="0" data-right="0">Không (0)</button>
+                    <button type="button" class="btn-chip-indent active" data-first="0" data-left="0" data-right="0">Không (0)</button>
+                    <button type="button" class="btn-chip-indent" data-first="0.5" data-left="0" data-right="0">Đầu dòng 0.5cm</button>
                     <button type="button" class="btn-chip-indent" data-first="1" data-left="0" data-right="0">Đầu dòng 1cm</button>
-                    <button type="button" class="btn-chip-indent active" data-first="1.27" data-left="0" data-right="0">Chuẩn 1.27cm</button>
                 </div>
             </div>
 
-            <!-- Áp dụng cho bảng -->
-            <div class="checkbox-row" style="margin-top: 2px; padding-top: 8px; border-top: 1px dashed #e2e8f0;">
-                <label class="custom-checkbox">
-                    <input type="checkbox" id="chk-apply-para-to-table">
-                    <span class="checkbox-label">Dùng Spacing & Giãn dòng trên khi Format Bảng</span>
-                </label>
+            <!-- Căn lề nội dung (hàng 2+) -->
+            <div style="margin-top: 2px; padding-top: 8px; border-top: 1px dashed #e2e8f0;">
+                <span class="config-label" style="font-weight: 600; font-size: 11.5px;">Căn lề nội dung (từ hàng 2):</span>
+                <div class="preset-group" style="margin-top: 4px;">
+                    <button type="button" class="btn-chip-align active" data-align="auto">Chuẩn bảng</button>
+                    <button type="button" class="btn-chip-align" data-align="Left">Trái</button>
+                    <button type="button" class="btn-chip-align" data-align="Centered">Giữa</button>
+                    <button type="button" class="btn-chip-align" data-align="Justified">Đều</button>
+                </div>
             </div>
         </section>
 
@@ -303,11 +273,6 @@
                 <span class="btn-text">Format Quốc hiệu / Tiêu ngữ</span>
             </button>
 
-            <button id="btn-format-paragraphs" class="btn btn-paragraph">
-                <span class="btn-icon">¶</span>
-                <span class="btn-text">Format Selected Paragraphs</span>
-            </button>
-
             <!-- Status message container -->
             <div id="status-box" class="status-box" style="display: none;">
                 <span id="status-icon" class="status-icon"></span>
@@ -323,7 +288,7 @@
                 <li><strong>Lùi đầu dòng:</strong> Loại bỏ hoàn toàn lùi đầu dòng (First Line Indent = 0) và thụt lề cho toàn bộ nội dung trong bảng.</li>
                 <li><strong>Lề ô (Cell margin):</strong> Tùy chỉnh tự do theo đơn vị cm riêng biệt từng cạnh (Trên, Dưới, Trái, Phải).</li>
                 <li><strong>Căn đều cột số liệu:</strong> Chia đều chiều rộng các cột số liệu, bảo đảm số không tràn hay nhảy dòng.</li>
-                <li><strong>Đoạn văn (Paragraph):</strong> Tùy chỉnh Căn lề, Giãn dòng (1.0 - 2.0x), Spacing (Before/After) và Thụt lề (Đầu dòng, Trái, Phải) cho văn bản hoặc tích hợp vào bảng.</li>
+                <li><strong>Đoạn văn trong bảng (Paragraph):</strong> Tùy chỉnh Giãn dòng (1.0 - 2.0x), Spacing (Before/After), Thụt lề (Đầu dòng, Trái, Phải) và Căn lề nội dung áp dụng trực tiếp khi định dạng bảng.</li>
                 <li class="quoc-hieu-rule">
                     <strong>Bảng Quốc hiệu - Tiêu ngữ:</strong> Tự động nhận diện, xóa hoàn toàn viền (No border), căn giữa cả 2 cột, Cột trái (Tên trường/Viện), Cột phải (Quốc hiệu in hoa in đậm, Tiêu ngữ in đậm, Ngày tháng in nghiêng).
                 </li>
