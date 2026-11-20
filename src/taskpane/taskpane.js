@@ -627,7 +627,7 @@ async function formatSingleTable(table, context) {
                     ? customWidthPt
                     : (currentTableWidthPt !== null ? currentTableWidthPt : 468);
 
-                const cellExtraPt = leftPt + rightPt + (paraOpts.leftIndentCm + paraOpts.rightIndentCm) * PT_PER_CM + 1.5;
+                const cellExtraPt = leftPt + rightPt + (paraOpts.leftIndentCm + paraOpts.rightIndentCm) * PT_PER_CM + 1;
                 const colRequiredWidths = [];
 
                 // Xét các cột số liệu từ phải sang trái để đo độ rộng nhỏ nhất vừa đúng 1 hàng của ô
