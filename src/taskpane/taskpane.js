@@ -6,6 +6,15 @@
 /* global Office, Word */
 
 Office.onReady((info) => {
+    initPaneZoom();
+    initAddinReloadListener();
+
+    try {
+        if (Office.actions && typeof Office.actions.associate === "function") {
+            Office.actions.associate("refreshAddin", refreshAddin);
+        }
+    } catch (e) {}
+
     if (info.host === Office.HostType.Word) {
         document.getElementById("btn-format-selected").onclick = formatSelectedTable;
         document.getElementById("btn-format-all").onclick = formatAllTables;
@@ -494,6 +503,34 @@ async function formatSingleTable(table, context) {
         }
     }
 
+    // 2. Luôn chạy AutoFit Window TRƯỚC TIÊN rồi mới điều chỉnh các thông số còn lại sau
+    let autoFitTableWidthPt = null;
+    try {
+        if (typeof table.autoFitWindow === "function") {
+            table.autoFitWindow();
+        } else if (typeof table.autoFitBehavior === "function") {
+            table.autoFitBehavior("Window");
+        }
+        table.load("width");
+    } catch (e) {
+        console.warn("AutoFit Window không được hỗ trợ hoặc gặp lỗi:", e);
+    }
+
+    // Load các hàng (rows) của bảng đồng thời sync AutoFit Window
+    const rows = table.rows;
+    rows.load("items");
+    await context.sync();
+
+    try {
+        if (typeof table.width === "number" && table.width > 0) {
+            autoFitTableWidthPt = table.width;
+        }
+    } catch (e) {}
+
+    if (rows.items.length === 0) {
+        return;
+    }
+
     // Quy chuẩn Cell Margin: lấy theo 4 ô tùy chỉnh riêng của người dùng (cm -> pt)
     const margins = getSelectedMargins();
     // 1 cm = 72 / 2.54 pt ≈ 28.3465 pt
@@ -509,15 +546,6 @@ async function formatSingleTable(table, context) {
         table.setCellPadding("Right", rightPt);
     } catch (e) {}
 
-    // 2. Load các hàng (rows) của bảng
-    const rows = table.rows;
-    rows.load("items");
-    await context.sync();
-
-    if (rows.items.length === 0) {
-        return;
-    }
-
     // Áp dụng độ cao hàng nếu người dùng có nhập giá trị (bỏ trống -> giữ nguyên)
     if (dims.rowHeightCm !== null) {
         const rowHeightPt = dims.rowHeightCm * PT_PER_CM;
@@ -528,11 +556,23 @@ async function formatSingleTable(table, context) {
         }
     }
 
-    // 3. Load các ô (cells) cho từng hàng
+    // 3. Load các ô (cells) cho từng hàng (và columnWidth hàng 0 phòng trường hợp table.width chưa trả về số dương)
     for (let r = 0; r < rows.items.length; r++) {
         rows.items[r].cells.load("items");
     }
     await context.sync();
+
+    if (autoFitTableWidthPt === null && rows.items[0].cells.items.length > 0) {
+        rows.items[0].cells.items.forEach((cell) => cell.load("columnWidth"));
+        await context.sync();
+        const sumColWidths = rows.items[0].cells.items.reduce(
+            (sum, cell) => sum + (typeof cell.columnWidth === "number" && cell.columnWidth > 0 ? cell.columnWidth : 0),
+            0
+        );
+        if (sumColWidths > 0) {
+            autoFitTableWidthPt = sumColWidths;
+        }
+    }
 
     // 4. Căn lề dọc ô (Center), đặt lề ô và load đoạn văn bản qua cell.body
     for (let r = 0; r < rows.items.length; r++) {
@@ -598,18 +638,9 @@ async function formatSingleTable(table, context) {
         }
     }
 
-    // 6. Điều chỉnh độ rộng bảng (nếu có nhập) & căn chỉnh kích thước các cột
+    // 6. Điều chỉnh độ rộng tùy chỉnh (nếu có) & căn chỉnh kích thước các cột
     const customWidthPt = (dims.tableWidthCm !== null) ? (dims.tableWidthCm * PT_PER_CM) : null;
-    let currentTableWidthPt = null;
-    if (customWidthPt === null) {
-        try {
-            table.load("width");
-            await context.sync();
-            if (typeof table.width === "number" && table.width > 0) {
-                currentTableWidthPt = table.width;
-            }
-        } catch (e) {}
-    } else {
+    if (customWidthPt !== null) {
         try {
             table.width = customWidthPt;
         } catch (e) {
@@ -622,10 +653,10 @@ async function formatSingleTable(table, context) {
             const colCount = rows.items[0].cells.items.length;
 
             if (colCount >= 2) {
-                // Tổng chiều rộng bảng: ưu tiên độ rộng tùy chỉnh -> độ rộng hiện tại -> chuẩn A4 (~468pt)
+                // Tổng chiều rộng bảng: ưu tiên độ rộng tùy chỉnh -> độ rộng AutoFit Window đã đo ở bước 2 -> chuẩn A4 (~468pt)
                 const totalWidth = customWidthPt !== null
                     ? customWidthPt
-                    : (currentTableWidthPt !== null ? currentTableWidthPt : 468);
+                    : (autoFitTableWidthPt !== null ? autoFitTableWidthPt : 468);
 
                 const cellExtraPt = leftPt + rightPt + (paraOpts.leftIndentCm + paraOpts.rightIndentCm) * PT_PER_CM + 1;
                 const colRequiredWidths = [];
@@ -678,17 +709,6 @@ async function formatSingleTable(table, context) {
         } catch (e) {
             console.warn("Lỗi khi điều chỉnh độ rộng cột:", e);
         }
-    } else if (customWidthPt === null) {
-        // Chỉ chạy AutoFit Window tự do nếu người dùng tắt tính năng căn đều cột VÀ không nhập độ rộng tùy chỉnh
-        try {
-            if (typeof table.autoFitWindow === "function") {
-                table.autoFitWindow();
-            } else if (typeof table.autoFitBehavior === "function") {
-                table.autoFitBehavior("Window");
-            }
-        } catch (e) {
-            console.warn("AutoFit Window không được hỗ trợ hoặc gặp lỗi:", e);
-        }
     }
 }
 
@@ -715,6 +735,15 @@ async function formatQuocHieuTable(table, context) {
             table.style = "Plain Table 1";
         } catch {}
     }
+
+    // 2. Luôn AutoFit Window trước khi điều chỉnh các thông số còn lại
+    try {
+        if (typeof table.autoFitWindow === "function") {
+            table.autoFitWindow();
+        } else if (typeof table.autoFitBehavior === "function") {
+            table.autoFitBehavior("Window");
+        }
+    } catch {}
 
     // 2. Xóa các đường viền của bảng (Dùng các vị trí an toàn)
     try {
@@ -837,15 +866,6 @@ async function formatQuocHieuTable(table, context) {
             }
         }
     }
-
-    // 6. AutoFit Window
-    try {
-        if (typeof table.autoFitWindow === "function") {
-            table.autoFitWindow();
-        } else if (typeof table.autoFitBehavior === "function") {
-            table.autoFitBehavior("Window");
-        }
-    } catch {}
 }
 
 /**
@@ -1022,4 +1042,158 @@ async function formatQuocHieuButton() {
     } finally {
         setButtonsDisabled(false);
     }
+}
+
+/**
+ * Khởi tạo tính năng Zoom In / Zoom Out / Reset cho Task Pane bằng Cmd/Ctrl + +/-/0
+ */
+function initPaneZoom() {
+    const STORAGE_KEY = "thesis_taskpane_zoom";
+    const MIN_ZOOM = 0.6;
+    const MAX_ZOOM = 1.8;
+    const STEP = 0.1;
+
+    let currentZoom = 1;
+    try {
+        const saved = parseFloat(localStorage.getItem(STORAGE_KEY));
+        if (!isNaN(saved) && saved >= MIN_ZOOM && saved <= MAX_ZOOM) {
+            currentZoom = saved;
+        }
+    } catch {}
+
+    let toastTimer = null;
+    const showZoomToast = (zoomVal) => {
+        let toast = document.getElementById("zoom-toast");
+        if (!toast) {
+            toast = document.createElement("div");
+            toast.id = "zoom-toast";
+            toast.className = "zoom-toast";
+            document.body.appendChild(toast);
+        }
+        toast.textContent = `${Math.round(zoomVal * 100)}%`;
+        toast.classList.add("visible");
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+            toast.classList.remove("visible");
+        }, 1200);
+    };
+
+    const applyZoom = (newZoom, showIndicator = true) => {
+        currentZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, Math.round(newZoom * 10) / 10));
+        document.documentElement.style.zoom = String(currentZoom);
+        try {
+            localStorage.setItem(STORAGE_KEY, String(currentZoom));
+        } catch {}
+        if (showIndicator) {
+            showZoomToast(currentZoom);
+        }
+    };
+
+    applyZoom(currentZoom, false);
+
+    if (window.__thesisZoomBound) return;
+    window.__thesisZoomBound = true;
+
+    document.addEventListener("keydown", (e) => {
+        if (!(e.metaKey || e.ctrlKey) || e.altKey) return;
+
+        const key = e.key;
+        const code = e.code;
+
+        if (key === "+" || key === "=" || code === "Equal" || code === "NumpadAdd") {
+            e.preventDefault();
+            e.stopPropagation();
+            applyZoom(currentZoom + STEP);
+        } else if (key === "-" || key === "_" || code === "Minus" || code === "NumpadSubtract") {
+            e.preventDefault();
+            e.stopPropagation();
+            applyZoom(currentZoom - STEP);
+        } else if (key === "0" || code === "Digit0" || code === "Numpad0") {
+            e.preventDefault();
+            e.stopPropagation();
+            applyZoom(1);
+        }
+    });
+}
+
+/**
+ * Tải lại Task Pane kèm cache-busting để nhận bản cập nhật mới nhất
+ */
+async function forceReloadTaskpane() {
+    try {
+        if ("caches" in window) {
+            const keys = await caches.keys();
+            await Promise.all(keys.map((k) => caches.delete(k)));
+        }
+    } catch {}
+
+    try {
+        const url = new URL(window.location.href);
+        url.searchParams.set("_v", String(Date.now()));
+        window.location.replace(url.toString());
+    } catch {
+        window.location.reload();
+    }
+}
+
+/**
+ * Lắng nghe tín hiệu cập nhật từ nút trên Ribbon Bar
+ */
+function initAddinReloadListener() {
+    if (window.__thesisReloadBound) return;
+    window.__thesisReloadBound = true;
+
+    window.addEventListener("storage", (e) => {
+        if (e.key === "thesis_addin_force_reload") {
+            forceReloadTaskpane();
+        }
+    });
+
+    try {
+        if (typeof BroadcastChannel !== "undefined") {
+            const ch = new BroadcastChannel("thesis_addin_channel");
+            ch.onmessage = (msg) => {
+                if (msg && msg.data === "force_reload") {
+                    forceReloadTaskpane();
+                }
+            };
+        }
+    } catch {}
+}
+
+/**
+ * Hàm ExecuteFunction được gọi khi bấm nút "Cập nhật Add-in" trên Ribbon Bar
+ * @param {Office.AddinCommands.Event} event
+ */
+async function refreshAddin(event) {
+    try {
+        try {
+            localStorage.setItem("thesis_addin_force_reload", String(Date.now()));
+        } catch {}
+
+        try {
+            if (typeof BroadcastChannel !== "undefined") {
+                const ch = new BroadcastChannel("thesis_addin_channel");
+                ch.postMessage("force_reload");
+                ch.close();
+            }
+        } catch {}
+
+        try {
+            if ("caches" in window) {
+                const keys = await caches.keys();
+                await Promise.all(keys.map((k) => caches.delete(k)));
+            }
+        } catch {}
+    } finally {
+        try {
+            if (event && typeof event.completed === "function") {
+                event.completed();
+            }
+        } catch {}
+    }
+}
+
+if (typeof window !== "undefined") {
+    window.refreshAddin = refreshAddin;
 }
