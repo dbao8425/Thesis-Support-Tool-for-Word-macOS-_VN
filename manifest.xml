@@ -70,6 +70,22 @@
                     <SourceLocation resid="Taskpane.Url" />
                   </Action>
                 </Control>
+
+                <Control xsi:type="Button" id="RefreshAddinButton">
+                  <Label resid="RefreshButton.Label" />
+                  <Supertip>
+                    <Title resid="RefreshButton.Label" />
+                    <Description resid="RefreshButton.Tooltip" />
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Icon.16x16" />
+                    <bt:Image size="32" resid="Icon.32x32" />
+                    <bt:Image size="80" resid="Icon.80x80" />
+                  </Icon>
+                  <Action xsi:type="ExecuteFunction">
+                    <FunctionName>refreshAddin</FunctionName>
+                  </Action>
+                </Control>
               </Group>
               <Label resid="ThesisTab.Label" />
             </CustomTab>
@@ -94,10 +110,12 @@
         <bt:String id="ThesisTab.Label" DefaultValue="Duy Bảo" />
         <bt:String id="ThesisGroup.Label" DefaultValue="Công cụ Bảng" />
         <bt:String id="TaskpaneButton.Label" DefaultValue="Format Tables" />
+        <bt:String id="RefreshButton.Label" DefaultValue="Cập nhật Add-in" />
       </bt:ShortStrings>
       <bt:LongStrings>
         <bt:String id="GetStarted.Description" DefaultValue="Add-in tự động định dạng bảng theo chuẩn khóa luận (font Times New Roman, căn lề, viền lưới)." />
         <bt:String id="TaskpaneButton.Tooltip" DefaultValue="Mở bảng điều khiển Task Pane để tự động định dạng bảng đang chọn hoặc toàn bộ bảng trong tài liệu." />
+        <bt:String id="RefreshButton.Tooltip" DefaultValue="Xóa cache và tải lại phiên bản mới nhất của Add-in." />
       </bt:LongStrings>
     </Resources>
   </VersionOverrides>
